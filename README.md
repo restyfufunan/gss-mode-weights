@@ -89,8 +89,26 @@ All files source `00_setup.R` and depend on outputs from prior steps.
 
 ## Key Methodological Notes
 
-- **Mode-specific weights** are constructed by raking each mode subsample independently to the full-sample `wtssps`-weighted marginals on seven demographic dimensions: age, sex, education, marital status, nativity, region, and race/ethnicity (8-category Hispanic + Census race classification).
-- **Regression controls** use the same 8-category race/ethnicity variable (`w_hisp_race`) as the raking procedure, ensuring consistency between the weighting and modeling stages.
+### Demographic Recoding & Raking Variables
+
+All demographic variables are canonically recoded in `00_setup.R` via the `recode_demographics()` function, which produces standardized factor variables used throughout the pipeline (04_mode_gaps.qmd, 05_persistence.qmd). The recoding scheme is as follows:
+
+| Variable | Categories | R Codes |
+|----------|-----------|---------|
+| **Age** (`agegrp`) | 5-level | 18–29, 30–39, 40–49, 50–64, 65+ (top-coded at 89) |
+| **Education** (`degree_cat`) | 3-level | Less than High School (0), High School (1–2), Bachelor's or More (3–4) |
+| **Sex** (`f_sex`) | 2-level | Male (1), Female (2) |
+| **Marital Status** (`marital_cat`) | 2-level | Married (1), Not Married (2–5: widowed, divorced, separated, never married) |
+| **Nativity** (`f_born`) | 2-level | Born in US (1), Born Outside the US (2) |
+| **Region** (`f_region`) | 4-level | Northeast (1), Midwest (2), South (3), West (4) |
+| **Race/Ethnicity** (`w_hisp_race`) | 8-level | Hispanic (`hispanic %in% 2:5`); Non-Hispanic White Alone (`racecen1==1`); Non-Hispanic Black Alone (`racecen1==2`); Non-Hispanic AIAN Alone (`racecen1==3`); Non-Hispanic Asian Alone (`racecen1 %in% 4–10`); Non-Hispanic NHPI Alone (`racecen1==14`); Non-Hispanic Other Race Alone (`racecen1 %in% 15–16`); Non-Hispanic Multiple Races (`!is.na(racecen2)`) |
+
+For **raking** (IPF) in `02_weights.qmd`, numeric codes are used instead of factor labels: binary variables (0/1), 3-level education (1–3), 4-level age (1–5 for the age bins), 4-level region, and 8-level race (1–8 ordered as above). The numeric cutpoints are identical to the canonical recoding to ensure consistency between raking margins and regression controls.
+
+### Mode-Specific Weights & Regression Controls
+
+- **Mode-specific weights** are constructed by raking each mode subsample independently to the full-sample `wtssps`-weighted marginals on these seven demographic dimensions.
+- **Regression controls** use the same canonical demographic variables as the raking procedure, ensuring consistency between the weighting and modeling stages.
 - **Outcome variables**: 137 binarized attitudinal items spanning 8 thematic domains (Religion; Race & Inequality; Civil Liberties & Government; Crime, Punishment & Firearms; Political & Economic Orientations; Social Attitudes & Morality; Institutional Confidence; Well-being & Life Orientations). Items are selected from a universe of 195 candidates in `data/analytic_core.csv` and must meet four criteria: (1) fielded in all four analysis years (2016, 2018, 2022, 2024); (2) substantive attitude items, excluding internet/technology use variables that are themselves mode-confounded; (3) no wording discontinuities or split-ballot variants across the study period; and (4) not conditionally fielded via skip patterns confounded with mode. Binarization and recoding are performed in `01_data_preparation.qmd`.
 - **Multiple comparison correction**: Holm-Bonferroni correction is applied to mode effect p-values across all outcome variables.
 

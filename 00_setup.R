@@ -53,13 +53,14 @@ recode_demographics <- function(df) {
       ),
 
       # --- Age (5 categories) ---
+      # Note: GSS top-codes age at 89, so "65+" captures all 65+ respondents
       agegrp = factor(
         case_when(
           age %in% 18:29 ~ "18-29",
           age %in% 30:39 ~ "30-39",
           age %in% 40:49 ~ "40-49",
           age %in% 50:64 ~ "50-64",
-          age >= 65       ~ "65+",
+          age %in% 65:89 ~ "65+",
           TRUE            ~ NA_character_
         ),
         levels = c("18-29", "30-39", "40-49", "50-64", "65+")
@@ -68,12 +69,12 @@ recode_demographics <- function(df) {
       # --- Education (3 categories) ---
       degree_cat = factor(
         case_when(
-          degree %in% 0:2 ~ "Less than BA",
-          degree == 3     ~ "BA",
-          degree == 4     ~ "Graduate",
+          degree == 0     ~ "Less than High School",
+          degree %in% 1:2 ~ "High School",
+          degree %in% 3:4 ~ "Bachelor's or More",
           TRUE            ~ NA_character_
         ),
-        levels = c("Less than BA", "BA", "Graduate")
+        levels = c("Less than High School", "High School", "Bachelor's or More")
       ),
 
       # --- Marital status (2 categories) ---
@@ -89,30 +90,32 @@ recode_demographics <- function(df) {
       # --- Race / Ethnicity -- 8 categories (regression control and raking) ---
       # Uses `hispanic`, `racecen1`, and `racecen2`.
       # GSS codes: hispanic == 1 -> Not Hispanic; hispanic %in% 2:5 -> Hispanic.
+      # racecen2 is NA for single-race respondents; !is.na(racecen2) for multiracial.
       w_hisp_race = factor(
         case_when(
-          hispanic %in% c(2:5)                             ~ "Hispanic",
-          hispanic == 1 & racecen1 == 1 & is.na(racecen2) ~ "White (NH)",
-          hispanic == 1 & racecen1 == 2 & is.na(racecen2) ~ "Black (NH)",
-          hispanic == 1 & racecen1 == 3 & is.na(racecen2) ~ "AI/AN",
-          hispanic == 1 & racecen1 == 4 & is.na(racecen2) ~ "Asian",
-          hispanic == 1 & racecen1 == 5 & is.na(racecen2) ~ "NH/PI",
-          hispanic == 1 & racecen1 == 6 & is.na(racecen2) ~ "Other",
-          hispanic == 1 & !is.na(racecen2)                 ~ "Multiple",
-          TRUE                                              ~ NA_character_
+          hispanic %in% c(2:5)                                    ~ "Hispanic",
+          hispanic == 1 & racecen1 == 1 & is.na(racecen2)        ~ "Non-Hispanic White Alone",
+          hispanic == 1 & racecen1 == 2 & is.na(racecen2)        ~ "Non-Hispanic Black Alone",
+          hispanic == 1 & racecen1 == 3 & is.na(racecen2)        ~ "Non-Hispanic AIAN Alone",
+          hispanic == 1 & racecen1 %in% c(4:10) & is.na(racecen2) ~ "Non-Hispanic Asian Alone",
+          hispanic == 1 & racecen1 == 14 & is.na(racecen2)       ~ "Non-Hispanic NHPI Alone",
+          hispanic == 1 & racecen1 %in% c(15, 16) & is.na(racecen2) ~ "Non-Hispanic Other Race Alone",
+          hispanic == 1 & !is.na(racecen2)                        ~ "Non-Hispanic Multiple Races",
+          TRUE                                                     ~ NA_character_
         ),
-        levels = c("White (NH)", "Black (NH)", "Hispanic",
-                   "AI/AN", "Asian", "NH/PI", "Other", "Multiple")
+        levels = c("Non-Hispanic White Alone", "Non-Hispanic Black Alone", "Non-Hispanic AIAN Alone",
+                   "Non-Hispanic Asian Alone", "Non-Hispanic NHPI Alone", "Non-Hispanic Other Race Alone",
+                   "Non-Hispanic Multiple Races", "Hispanic")
       ),
 
       # --- Nativity (2 categories) ---
       f_born = factor(
         case_when(
           born == 1 ~ "Born in US",
-          born == 2 ~ "Born Elsewhere",
+          born == 2 ~ "Born Outside the US",
           TRUE      ~ NA_character_
         ),
-        levels = c("Born in US", "Born Elsewhere")
+        levels = c("Born in US", "Born Outside the US")
       ),
 
       # --- Sex (2 categories) ---
@@ -138,6 +141,24 @@ recode_demographics <- function(df) {
       )
     )
 }
+
+# Short-label lookup vectors for figures (full form stored in factor levels above)
+RACE_LABELS_SHORT <- c(
+  "Non-Hispanic White Alone"      = "White (NH)",
+  "Non-Hispanic Black Alone"      = "Black (NH)",
+  "Non-Hispanic AIAN Alone"       = "AIAN (NH)",
+  "Non-Hispanic Asian Alone"      = "Asian (NH)",
+  "Non-Hispanic NHPI Alone"       = "NHPI (NH)",
+  "Non-Hispanic Other Race Alone" = "Other (NH)",
+  "Non-Hispanic Multiple Races"   = "Multiple (NH)",
+  "Hispanic"                      = "Hispanic"
+)
+
+EDUCATION_LABELS_SHORT <- c(
+  "Less than High School" = "< HS",
+  "High School"           = "HS",
+  "Bachelor's or More"    = "BA+"
+)
 
 # -----------------------------------------------------------------------------
 # 5. Analytic core variable set

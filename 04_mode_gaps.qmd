@@ -224,6 +224,13 @@ gtsave(
   file.path(out_tables, "logistic_shapley_predictors.png"),
   expand = 10
 )
+
+# Export table1_data as CSV for paper
+write.csv(
+  table1_data %>% select(variable, OR, CI_low, CI_high, Percent_of_Fit, Rank),
+  file.path(out_data, "logistic_shapley_table1.csv"),
+  row.names = FALSE
+)
 ```
 
 ------------------------------------------------------------------------

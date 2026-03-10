@@ -33,8 +33,8 @@ dir.create(out_fig, recursive = TRUE, showWarnings = FALSE)
 ## Load Data
 
 ```{r load-data, message=FALSE, warning=FALSE}
-if (!file.exists(GSS_DTA_PATH)) stop("GSS data file not found: ", GSS_DTA_PATH)
-gss_full <- read_dta(GSS_DTA_PATH)
+if (!file.exists(GSS_RDS_PATH)) stop("RDS file not found: ", GSS_RDS_PATH)
+gss_full <- readRDS(GSS_RDS_PATH)
 ```
 
 ------------------------------------------------------------------------
@@ -42,12 +42,13 @@ gss_full <- read_dta(GSS_DTA_PATH)
 ## Define Variables
 
 ```{r define-vars, message=FALSE, warning=FALSE}
-# Filter to analysis years and construct mode and demographic variables.
+# Filter to analysis years, apply canonical demographic recoding, and construct mode variables.
 
 gss_analysis <- gss_full %>%
   filter(year %in% c(2016, 2018, 2022, 2024)) %>%
+  recode_demographics() %>%
   mutate(
-    # Survey mode — three-level factor
+    # Survey mode — three-level factor (unique to 03_composition for stacked bar chart)
     mode_label = case_when(
       year %in% c(2016, 2018) & mode == 1 ~ "FTF",
       year %in% c(2016, 2018) & mode == 2 ~ "Phone",
@@ -57,60 +58,11 @@ gss_analysis <- gss_full %>%
       TRUE                               ~ NA_character_
     ),
 
-    # Binary mode indicator (2022–2024 only)
+    # Binary mode indicator (2022–2024 only) — derived from canonical mode_fctr
     mode_bin = case_when(
       mode %in% c(1, 2) ~ "FTF/Phone",
       mode == 4         ~ "Web",
       TRUE              ~ NA_character_
-    ),
-
-    # --- Demographic variables ---
-    w_married = case_when(
-      marital == 1      ~ "Married",
-      marital %in% 2:5  ~ "Not Married",
-      TRUE              ~ NA_character_
-    ),
-
-    w_born = case_when(
-      born == 1 ~ "Born in US",
-      born == 2 ~ "Born Elsewhere",
-      TRUE      ~ NA_character_
-    ),
-
-    w_male = case_when(
-      sex == 1 ~ "Male",
-      sex == 2 ~ "Female",
-      TRUE     ~ NA_character_
-    ),
-
-    # Education: three categories matching codebook degree variable
-    w_degree = case_when(
-      degree == 0           ~ "LT HS",
-      degree %in% c(1, 2)  ~ "HS/Assoc",
-      degree %in% c(3, 4)  ~ "BA+",
-      TRUE                  ~ NA_character_
-    ),
-
-    w_agegroup = case_when(
-      age %in% 18:29 ~ "18-29",
-      age %in% 30:39 ~ "30-39",
-      age %in% 40:49 ~ "40-49",
-      age %in% 50:64 ~ "50-64",
-      age >= 65       ~ "65+",
-      TRUE            ~ NA_character_
-    ),
-
-    # Race/Ethnicity: uses racecen1 and hispanic (consistent with 02_weights.qmd)
-    w_hisp_race = case_when(
-      hispanic %in% c(2:5)                          ~ "Hispanic",
-      hispanic == 1 & racecen1 == 1 & is.na(racecen2) ~ "White (NH)",
-      hispanic == 1 & racecen1 == 2 & is.na(racecen2) ~ "Black (NH)",
-      hispanic == 1 & racecen1 == 3 & is.na(racecen2) ~ "AI/AN",
-      hispanic == 1 & racecen1 == 4 & is.na(racecen2) ~ "Asian",
-      hispanic == 1 & racecen1 == 5 & is.na(racecen2) ~ "NH/PI",
-      hispanic == 1 & racecen1 == 6 & is.na(racecen2) ~ "Other",
-      hispanic == 1 & !is.na(racecen2)                ~ "Multiple",
-      TRUE                                             ~ NA_character_
     )
   )
 ```
@@ -189,7 +141,7 @@ compute_wtd_props <- function(data, var, weight_col = "wtssps") {
     )
 }
 
-demo_vars <- c("w_married", "w_born", "w_male", "w_degree", "w_agegroup", "w_hisp_race")
+demo_vars <- c("marital_cat", "f_born", "f_sex", "degree_cat", "agegrp", "w_hisp_race")
 
 pop_benchmarks <- map_dfr(demo_vars, ~ compute_wtd_props(gss_2224, .x)) %>%
   mutate(group = "Population")
@@ -227,13 +179,13 @@ plot_data_unweighted <- bind_rows(
   mutate(
     group = factor(group, levels = c("FTF/Phone", "Web", "Population")),
     facet_label = case_when(
-      variable == "w_married"   ~ "Marital Status",
-      variable == "w_born"      ~ "Nativity",
-      variable == "w_male"      ~ "Sex",
-      variable == "w_degree"    ~ "Education",
-      variable == "w_agegroup"  ~ "Age",
-      variable == "w_hisp_race" ~ "Race/Ethnicity",
-      TRUE                      ~ variable
+      variable == "marital_cat"  ~ "Marital Status",
+      variable == "f_born"       ~ "Nativity",
+      variable == "f_sex"        ~ "Sex",
+      variable == "degree_cat"   ~ "Education",
+      variable == "agegrp"       ~ "Age",
+      variable == "w_hisp_race"  ~ "Race/Ethnicity",
+      TRUE                       ~ variable
     )
   )
 
@@ -279,21 +231,113 @@ ggsave(
 
 ------------------------------------------------------------------------
 
-## Key Observations
+## Age Means by Mode
 
-The unweighted comparison reveals systematic compositional differences between the FTF/Phone and Web subsamples:
+```{r age-means-by-mode, message=FALSE, warning=FALSE}
+age_means <- gss_2224_modes %>%
+  filter(!is.na(age)) %>%
+  group_by(mode_bin) %>%
+  summarise(
+    n = n(),
+    mean_age = mean(age, na.rm = TRUE),
+    sd_age = sd(age, na.rm = TRUE),
+    min_age = min(age, na.rm = TRUE),
+    max_age = max(age, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    mode_bin = factor(mode_bin, levels = c("FTF/Phone", "Web"))
+  ) %>%
+  arrange(mode_bin)
 
-**Education**: The Web sample is substantially more educated than the FTF/Phone sample. Web respondents hold a BA or higher degree at roughly 42%, compared to 28% for FTF/Phone and a population benchmark near 32%. This is the largest compositional gap across all dimensions.
+age_means %>%
+  gt() %>%
+  tab_header(
+    title    = "Age Summary Statistics by Mode (2022–2024)",
+    subtitle = "Unweighted respondent data"
+  ) %>%
+  fmt_number(columns = c(mean_age, sd_age), decimals = 1) %>%
+  fmt_integer(columns = c(n, min_age, max_age)) %>%
+  cols_label(
+    mode_bin  = "Mode",
+    n         = "N",
+    mean_age  = "Mean Age",
+    sd_age    = "Std Dev",
+    min_age   = "Min",
+    max_age   = "Max"
+  )
 
-**Marital Status**: Web respondents are more likely to be married (≈47%) than FTF/Phone respondents (≈36%). This gap exceeds the typical mode-to-population discrepancy.
+# Export age means for §2.1 verification
+write.csv(
+  age_means,
+  file.path(out_fig, "../data/age_means_by_mode.csv"),
+  row.names = FALSE
+)
+```
 
-**Race/Ethnicity**: Web respondents are more likely to identify as White, non-Hispanic (≈71%) compared to FTF/Phone (≈60%), reflecting differential recruitment patterns by mode.
+------------------------------------------------------------------------
 
-**Age**: The FTF/Phone sample skews slightly older (mean ≈51.2) than the Web sample (mean ≈48.6), consistent with the known web-uptake gradient by age.
+## Population Benchmark Values by Year
 
-**Nativity and Sex**: Differences are smaller but directionally consistent with prior multimode literature.
+```{r pop-benchmarks-by-year-table, message=FALSE, warning=FALSE}
+# Compute weighted proportions by year
+pop_benchmarks_by_year <- gss_analysis %>%
+  filter(year %in% c(2016, 2018, 2022, 2024), !is.na(wtssps)) %>%
+  pivot_longer(
+    cols = all_of(demo_vars),
+    names_to = "variable",
+    values_to = "value"
+  ) %>%
+  filter(!is.na(value)) %>%
+  group_by(year, variable, value) %>%
+  summarise(
+    wt_sum = sum(wtssps, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  group_by(year, variable) %>%
+  mutate(prop = wt_sum / sum(wt_sum)) %>%
+  ungroup() %>%
+  mutate(
+    variable_label = case_when(
+      variable == "marital_cat"  ~ "Marital Status",
+      variable == "f_born"       ~ "Nativity",
+      variable == "f_sex"        ~ "Sex",
+      variable == "degree_cat"   ~ "Education",
+      variable == "agegrp"       ~ "Age",
+      variable == "w_hisp_race"  ~ "Race/Ethnicity",
+      TRUE                       ~ variable
+    )
+  ) %>%
+  select(variable_label, value, year, prop) %>%
+  pivot_wider(
+    names_from = year,
+    values_from = prop,
+    names_prefix = "Year_"
+  ) %>%
+  rename(Category = value)
 
-These compositional divergences motivate the construction of mode-specific post-stratification weights (see `02_weights.qmd`), which rake each mode subsample independently to the same population benchmarks.
+pop_benchmarks_by_year %>%
+  gt(groupname_col = "variable_label") %>%
+  tab_header(
+    title    = "Population Benchmark Values by Year",
+    subtitle = "Weighted proportions using wtssps"
+  ) %>%
+  fmt_percent(columns = c(Year_2016, Year_2018, Year_2022, Year_2024), decimals = 1) %>%
+  cols_label(
+    Category = "Category",
+    Year_2016 = "2016",
+    Year_2018 = "2018",
+    Year_2022 = "2022",
+    Year_2024 = "2024"
+  )
+
+# Export population benchmarks for §2.1 verification
+write.csv(
+  pop_benchmarks_by_year,
+  file.path(out_fig, "../data/population_benchmarks_by_year.csv"),
+  row.names = FALSE
+)
+```
 
 ------------------------------------------------------------------------
 
@@ -304,9 +348,9 @@ The chunk below explicitly prints the values cited in the paper for easy verific
 ```{r verify-intext-stats, message=FALSE, warning=FALSE}
 verify_stats <- unweighted_props %>%
   filter(
-    (variable == "w_degree"    & value == "BA+")           |
-    (variable == "w_married"   & value == "Married")       |
-    (variable == "w_hisp_race" & value == "White (NH)")
+    (variable == "degree_cat"  & value == "Bachelor's or More") |
+    (variable == "marital_cat" & value == "Married")            |
+    (variable == "w_hisp_race" & value == "Non-Hispanic White Alone")
   ) %>%
   select(group, variable, value, prop) %>%
   mutate(prop_pct = round(prop * 100, 1)) %>%

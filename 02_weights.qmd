@@ -12,7 +12,7 @@ Computes mode-specific post-stratification weights for the 2022 and 2024 GSS usi
 
 Hot-deck imputation handles missing values before raking to prevent case loss. Output is written to `data/gss20222024_modeweights.dta`.
 
----
+------------------------------------------------------------------------
 
 ## Setup
 
@@ -179,22 +179,22 @@ prep_diagnostic_data <- function(df) {
     filter(sample != 4, sample != 5, sample != 7, !is.na(wtssps)) %>%
     mutate(
       w_married = case_when(marital == 1 ~ "Married", marital %in% 2:5 ~ "Not Married"),
-      w_born = case_when(born == 1 ~ "Born in US", born == 2 ~ "Born Elsewhere"),
+      w_born = case_when(born == 1 ~ "Born in US", born == 2 ~ "Born Outside the US"),
       w_male = case_when(sex == 1 ~ "Male", sex == 2 ~ "Female"),
-      w_degree = case_when(degree == 0 ~ "LT HS", degree %in% 1:2 ~ "HS/Assoc", degree %in% 3:4 ~ "BA/Grad"),
+      w_degree = case_when(degree == 0 ~ "Less than High School", degree %in% 1:2 ~ "High School", degree %in% 3:4 ~ "Bachelor's or More"),
       w_agegroup = case_when(
         age %in% 18:29 ~ "18-29", age %in% 30:39 ~ "30-39", age %in% 40:49 ~ "40-49",
-        age %in% 50:64 ~ "50-64", age >= 65 ~ "65+"
+        age %in% 50:64 ~ "50-64", age %in% 65:89 ~ "65+"
       ),
       w_hisp_race = case_when(
-        hispanic %in% c(2:5)                             ~ "Hispanic",
-        hispanic == 1 & racecen1 == 1 & is.na(racecen2) ~ "White (NH)",
-        hispanic == 1 & racecen1 == 2 & is.na(racecen2) ~ "Black (NH)",
-        hispanic == 1 & racecen1 == 3 & is.na(racecen2) ~ "AI/AN",
-        hispanic == 1 & racecen1 == 4 & is.na(racecen2) ~ "Asian",
-        hispanic == 1 & racecen1 == 5 & is.na(racecen2) ~ "NH/PI",
-        hispanic == 1 & racecen1 == 6 & is.na(racecen2) ~ "Other",
-        hispanic == 1 & !is.na(racecen2)                 ~ "Multiple"
+        hispanic %in% c(2:5)                                    ~ "Hispanic",
+        hispanic == 1 & racecen1 == 1 & is.na(racecen2)        ~ "Non-Hispanic White Alone",
+        hispanic == 1 & racecen1 == 2 & is.na(racecen2)        ~ "Non-Hispanic Black Alone",
+        hispanic == 1 & racecen1 == 3 & is.na(racecen2)        ~ "Non-Hispanic AIAN Alone",
+        hispanic == 1 & racecen1 %in% c(4:10) & is.na(racecen2) ~ "Non-Hispanic Asian Alone",
+        hispanic == 1 & racecen1 == 14 & is.na(racecen2)       ~ "Non-Hispanic NHPI Alone",
+        hispanic == 1 & racecen1 %in% c(15, 16) & is.na(racecen2) ~ "Non-Hispanic Other Race Alone",
+        hispanic == 1 & !is.na(racecen2)                        ~ "Non-Hispanic Multiple Races"
       ),
       w_region = as.character(region)
     ) %>%
