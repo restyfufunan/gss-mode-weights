@@ -14,10 +14,12 @@ gss_data_16to24_r2.rds
 .quarto/
 
 # =============================================================================
-# Figures (fully reproducible from pipeline)
+# Outputs (fully reproducible from pipeline)
 # =============================================================================
 
 outputs/figures/
+outputs/tables/
+outputs/data/
 
 # =============================================================================
 # renv cache
