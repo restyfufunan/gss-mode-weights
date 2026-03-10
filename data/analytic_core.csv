@@ -1,0 +1,196 @@
+variable,domain,source_topic,analytic_core,exclusion_reason,notes
+ABANY,Social Attitudes & Morality,Legalized abortion,1,,
+ABDEFECT,Social Attitudes & Morality,Legalized abortion,1,,
+ABHLTH,Social Attitudes & Morality,Legalized abortion,1,,
+ABNOMORE,Social Attitudes & Morality,Legalized abortion,1,,
+ABPOOR,Social Attitudes & Morality,Legalized abortion,1,,
+ABRAPE,Social Attitudes & Morality,Legalized abortion,1,,
+ABSINGLE,Social Attitudes & Morality,Legalized abortion,1,,
+AFFRMACT,Race & Inequality,Racial attitudes and stereotypes,1,,
+ATTEND,Religion,Religious attitudes and behavior,1,,
+BIBLE,Religion,Religious attitudes and behavior,1,,
+CAPPUN,"Crime, Punishment & Firearms",Attitude and opinion items,1,,
+CHLDIDEL,Social Attitudes & Morality,Family & children,1,,
+CLASS,Political & Economic Orientations,Class identification and economic well-being,1,,
+COLATH,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+COLCOM,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+COLMSLM,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+COLRAC,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+CONARMY,Institutional Confidence,Confidence in institutions,1,,
+CONBUS,Institutional Confidence,Confidence in institutions,1,,
+CONCLERG,Institutional Confidence,Confidence in institutions,1,,
+CONEDUC,Institutional Confidence,Confidence in institutions,1,,
+CONFED,Institutional Confidence,Confidence in institutions,1,,
+CONFINAN,Institutional Confidence,Confidence in institutions,1,,
+CONJUDGE,Institutional Confidence,Confidence in institutions,1,,
+CONLABOR,Institutional Confidence,Confidence in institutions,1,,
+CONLEGIS,Institutional Confidence,Confidence in institutions,1,,
+CONMEDIC,Institutional Confidence,Confidence in institutions,1,,
+CONPRESS,Institutional Confidence,Confidence in institutions,1,,
+CONSCI,Institutional Confidence,Confidence in institutions,1,,
+CONTV,Institutional Confidence,Confidence in institutions,1,,
+COURTS,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+DISCAFF,Race & Inequality,Attitude and opinion items,1,,
+DISCAFFM,Social Attitudes & Morality,Gender roles,1,,
+DISCAFFW,Social Attitudes & Morality,Gender roles,1,,
+DIVLAW,Religion,Religion,1,,
+EQWLTH,Civil Liberties & Government,Government Intervention,1,,
+FAIR,Well-being & Life Orientations,Subjective well-being and social life orientations,1,,
+FEAR,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+FECHLD,Social Attitudes & Morality,Gender roles,1,,
+FEFAM,Social Attitudes & Morality,Gender roles,1,,
+FEHIRE,Social Attitudes & Morality,Gender roles,1,,
+FEJOBAFF,Social Attitudes & Morality,Gender roles,1,,
+FEPOL,Social Attitudes & Morality,Gender roles,1,,
+FEPRESCH,Social Attitudes & Morality,Gender roles,1,,
+FINALTER,Political & Economic Orientations,Class identification and economic well-being,1,,
+FINRELA,Political & Economic Orientations,Class identification and economic well-being,1,,
+GETAHEAD,Political & Economic Orientations,Economic well-being,1,,
+GOD,Religion,Religious attitudes and behavior,1,,
+GOODLIFE,Political & Economic Orientations,Economic well-being,1,,
+GRASS,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+GUNLAW,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+HAPPY,Well-being & Life Orientations,Subjective well-being and social life orientations,1,,
+HEALTH,Well-being & Life Orientations,Subjective well-being and social life orientations,1,,
+HELPBLK,Civil Liberties & Government,Government Intervention,1,,
+HELPFUL,Well-being & Life Orientations,Subjective well-being and social life orientations,1,,
+HELPNOT,Civil Liberties & Government,Government Intervention,1,,
+HELPOTH,Social Attitudes & Morality,Family & children,1,,
+HELPPOOR,Civil Liberties & Government,Government Intervention,1,,
+HELPSICK,Civil Liberties & Government,Government Intervention,1,,
+HOMOSEX,Social Attitudes & Morality,Sexual behavior,1,,
+JOBFIND,Well-being & Life Orientations,Work orientation,1,,
+JOBLOSE,Well-being & Life Orientations,Work orientation,1,,
+KIDSSOL,Political & Economic Orientations,Economic well-being,1,,
+LETDIE1,Well-being & Life Orientations,Suicide,1,,
+LETIN1A,Race & Inequality,Attitude and opinion items,1,,
+LIBATH,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+LIBCOM,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+LIBMSLM,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+LIBRAC,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+LIFE,Well-being & Life Orientations,Subjective well-being,1,,
+MEOVRWRK,Social Attitudes & Morality,Gender roles,1,,
+NATAID,Political & Economic Orientations,Priorities for national spending,1,,
+NATARMS,Political & Economic Orientations,Priorities for national spending,1,,
+NATCHLD,Political & Economic Orientations,Priorities for national spending,1,,
+NATCITY,Political & Economic Orientations,Priorities for national spending,1,,
+NATCRIME,Political & Economic Orientations,Priorities for national spending,1,,
+NATDRUG,Political & Economic Orientations,Priorities for national spending,1,,
+NATEDUC,Political & Economic Orientations,Priorities for national spending,1,,
+NATENRGY,Political & Economic Orientations,Priorities for national spending,1,,
+NATENVIR,Political & Economic Orientations,Priorities for national spending,1,,
+NATFARE,Political & Economic Orientations,Priorities for national spending,1,,
+NATHEAL,Political & Economic Orientations,Priorities for national spending,1,,
+NATRACE,Political & Economic Orientations,Priorities for national spending,1,,
+NATROAD,Political & Economic Orientations,Priorities for national spending,1,,
+NATSCI,Political & Economic Orientations,Priorities for national spending,1,,
+NATSOC,Political & Economic Orientations,Priorities for national spending,1,,
+NATSPAC,Political & Economic Orientations,Priorities for national spending,1,,
+OBEY,Social Attitudes & Morality,Family & children,1,,
+PARSOL,Political & Economic Orientations,Economic well-being,1,,
+PARTYID,Political & Economic Orientations,Voting and political preferences,1,,
+PILLOK,Social Attitudes & Morality,Sexual behavior,1,,
+POLABUSE,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+POLATTAK,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+POLESCAP,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+POLHITOK,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+POLMURDR,"Crime, Punishment & Firearms","Crime, punishment, and firearms",1,,
+POLVIEWS,Political & Economic Orientations,Voting and political preferences,1,,
+POPULAR,Social Attitudes & Morality,Family & children,1,,
+PORNLAW,Social Attitudes & Morality,Sexual behavior,1,,
+POSTLIFE,Religion,Religious attitudes and behavior,1,,
+PRAY,Religion,Religious attitudes and behavior,1,,
+PRAYER,Religion,Religion,1,,
+PREMARSX,Social Attitudes & Morality,Sexual behavior,1,,
+RACDIF1,Race & Inequality,Racial attitudes and stereotypes,1,,
+RACDIF2,Race & Inequality,Racial attitudes and stereotypes,1,,
+RACDIF3,Race & Inequality,Racial attitudes and stereotypes,1,,
+RACDIF4,Race & Inequality,Racial attitudes and stereotypes,1,,
+RACOPEN,Race & Inequality,Racial attitudes,1,,
+RANK,Political & Economic Orientations,Class identification and economic well-being,1,,
+REBORN,Religion,Religious attitudes and behavior,1,,
+RELACTIV,Religion,Religious attitudes and behavior,1,,
+RELPERSN,Religion,Religious attitudes and behavior,1,,
+RICHWORK,Well-being & Life Orientations,Work orientation,1,,
+SATFIN,Political & Economic Orientations,Class identification and economic well-being,1,,
+SATJOB,Well-being & Life Orientations,Subjective well-being and social life orientations,1,,
+SEXEDUC,Social Attitudes & Morality,Sexual behavior,1,,
+SPANKING,Social Attitudes & Morality,Family & children,1,,
+SPKATH,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+SPKCOM,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+SPKMSLM,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+SPKRAC,Civil Liberties & Government,Civil liberties (Stouffer),1,,
+SPRTPRSN,Religion,Religious attitudes and behavior,1,,
+SUICIDE1,Well-being & Life Orientations,Suicide,1,,
+SUICIDE2,Well-being & Life Orientations,Suicide,1,,
+SUICIDE4,Well-being & Life Orientations,Suicide,1,,
+TAX,Political & Economic Orientations,Tax attitudes,1,,
+TEENSEX,Social Attitudes & Morality,Sexual behavior,1,,
+THNKSELF,Social Attitudes & Morality,Family & children,1,,
+TRUST,Well-being & Life Orientations,Subjective well-being and social life orientations,1,,
+WLTHBLKS,Race & Inequality,Racial attitudes and stereotypes,1,,
+WLTHWHTS,Race & Inequality,Racial attitudes and stereotypes,1,,
+WORKBLKS,Race & Inequality,Racial attitudes and stereotypes,1,,
+WORKHARD,Social Attitudes & Morality,Family & children,1,,
+WORKWHTS,Race & Inequality,Racial attitudes and stereotypes,1,,
+WRKWAYUP,Race & Inequality,Racial attitudes and stereotypes,1,,
+XMARSEX,Social Attitudes & Morality,Sexual behavior,1,,
+XMOVIE,Social Attitudes & Morality,Sexual behavior,1,,
+HAPCOHAB,Well-being & Life Orientations,Subjective well-being and social life orientations,0,conditionally_fielded,Asked only of cohabiting respondents. Excluded for same reason as HAPMAR: structural missingness confounded with mode.
+HAPMAR,Well-being & Life Orientations,Subjective well-being and social life orientations,0,conditionally_fielded,Asked only of married respondents. Excluded due to structural missingness confounded with mode (FTF/Phone and web subsamples differ in marital composition). See also HAPCOHAB.
+BROADBAND,NA,Computer and internet usage,0,excluded_not_attitude_item,Binary yes/no item (household broadband access). Excluded as non-attitude item; directly confounded with mode selection.
+COMPUSE,NA,Computer and internet usage,0,excluded_not_attitude_item,Binary yes/no item (ever use a computer). Excluded as non-attitude item; also likely confounded with mode selection (web respondents by definition have computer/internet access).
+MOBILEDATA,NA,Computer and internet usage,0,excluded_not_attitude_item,Binary yes/no item (household cellular data access). Excluded as non-attitude item; directly confounded with mode selection.
+WEBMOB,NA,Computer and internet usage,0,excluded_not_attitude_item,Binary yes/no item (internet access via mobile device). Excluded as non-attitude item; directly confounded with mode selection.
+SVYENJOY,NA,Interest in surveys,0,excluded_survey_quality,
+SVYID1,NA,Interest in surveys,0,excluded_survey_quality,
+SVYID2,NA,Interest in surveys,0,excluded_survey_quality,
+IF16WHO,Political & Economic Orientations,Voting and political preferences,0,excluded_voting_items,Excluded: hypothetical presidential vote choice item.
+IF20WHO,Political & Economic Orientations,Voting and political preferences,0,excluded_voting_items,Excluded: hypothetical presidential vote choice item.
+PRES16,Political & Economic Orientations,Voting and political preferences,0,excluded_voting_items,Excluded: presidential vote choice item.
+PRES20,Political & Economic Orientations,Voting and political preferences,0,excluded_voting_items,Excluded: presidential vote choice item.
+VOTE16,Political & Economic Orientations,Voting and political preferences,0,excluded_voting_items,"Excluded: voting behavior item, not an attitude measure."
+VOTE20,Political & Economic Orientations,Voting and political preferences,0,excluded_voting_items,"Excluded: voting behavior item, not an attitude measure."
+ADOPTUS,NA,Immigration,0,not_fielded_all_years,
+CANTRUST,Well-being & Life Orientations,Subjective well-being and social life orientations,0,not_fielded_all_years,
+COLHOMO,Civil Liberties & Government,Civil liberties (Stouffer),0,not_fielded_all_years,"Civil liberties item: allow homosexual to teach at college. Dropped from 2022/2024 GSS; not in 2024 codebook. Companion items COLATH, COLRAC, COLCOM, COLMSLM are in the analytic core."
+COLMIL,Civil Liberties & Government,Civil liberties (Stouffer),0,not_fielded_all_years,"Civil liberties item: allow militarist to teach at college. Dropped from 2022/2024 GSS; not in 2024 codebook. Companion items COLATH, COLRAC, COLCOM, COLMSLM are in the analytic core."
+EMAILHR,NA,Computer and internet usage,0,not_fielded_all_years,"Hours per week on email — continuous item, not binary-recodable. Last fielded 2018; not in 2022/2024."
+EMAILMIN,NA,Computer and internet usage,0,not_fielded_all_years,"Minutes per week on email — continuous item, not binary-recodable. Last fielded 2018; not in 2022/2024."
+IMMCRIME,NA,Immigration,0,not_fielded_all_years,
+IMMFATE,NA,Immigration,0,not_fielded_all_years,
+IMMJOBS,NA,Immigration,0,not_fielded_all_years,
+INTLBLKS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,
+INTLHSPS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,
+INTLWHTS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,
+LETINASN,NA,Immigration,0,not_fielded_all_years,5-category immigration attitude item (Asian immigrants). Recoded in 01_data_preparation.qmd but absent from GLM and forest outputs. Fielded only once pre-2022 (single entry in vars-by-year); not in 2016/2018 baseline.
+LETINHSP,NA,Immigration,0,not_fielded_all_years,5-category immigration attitude item (Latin American immigrants). Recoded in 01_data_preparation.qmd but absent from GLM and forest outputs. Fielded only once pre-2022 (single entry in vars-by-year); not in 2016/2018 baseline.
+LIBHOMO,Civil Liberties & Government,Civil liberties (Stouffer),0,not_fielded_all_years,"Civil liberties item: allow homosexual's book in public library. Dropped from 2022/2024 GSS; not in 2024 codebook. Companion items LIBATH, LIBRAC, LIBCOM, LIBMSLM are in the analytic core."
+LIBMIL,Civil Liberties & Government,Civil liberties (Stouffer),0,not_fielded_all_years,"Civil liberties item: allow militarist's book in public library. Dropped from 2022/2024 GSS; not in 2024 codebook. Companion items LIBATH, LIBRAC, LIBCOM, LIBMSLM are in the analytic core."
+LIVEBLKS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,Racial contact item: favor/oppose close relative living in neighborhood with Black people. Fielded in 2022 but not 2024 (NOT AVAILABLE IN THIS RELEASE in 2024 codebook).
+LIVEWHTS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,Racial contact item: favor/oppose close relative living in neighborhood with White people. Confirmed not fielded in 2022/2024.
+MARASIAN,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,Not fielded in 2024 (coded NOT AVAILABLE IN THIS RELEASE). 5-point favor/oppose scale re close relative marrying an Asian American person. Fielded in 2022; would require 2022-only analysis.
+MARBLK,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,Not fielded in 2024 (coded NOT AVAILABLE IN THIS RELEASE). 5-point favor/oppose scale re close relative marrying a Black person. Fielded in 2022; would require 2022-only analysis.
+MARHISP,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,Not fielded in 2024 (coded NOT AVAILABLE IN THIS RELEASE). 5-point favor/oppose scale re close relative marrying a Hispanic/Latino person. Fielded in 2022; would require 2022-only analysis.
+MARWHT,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,Not fielded in 2024 (coded NOT AVAILABLE IN THIS RELEASE). 5-point favor/oppose scale re close relative marrying a White person. Fielded in 2022; would require 2022-only analysis.
+NATMASS,Political & Economic Orientations,Priorities for national spending,0,not_fielded_all_years,National spending item (mass transportation). Not fielded in 2022/2024. Companion natspend items are in the analytic core.
+NATPARK,Political & Economic Orientations,Priorities for national spending,0,not_fielded_all_years,National spending item (parks and recreation). Not fielded in 2022/2024. Companion natspend items are in the analytic core.
+NOATHOME,NA,Conflict with work,0,not_fielded_all_years,
+NONURSE,NA,Conflict with work,0,not_fielded_all_years,
+RACDIF5,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,"Not fielded in 2016/2018 — new item introduced in 2024. Asks whether racial differences are due to discrimination (1=Yes, 2=No). Note: coding direction is opposite to RACDIF1-4 where 1=conservative response; if added to future analyses, recode as to0=1, to1=2 for directional consistency."
+REFMORWK,NA,Conflict with work,0,not_fielded_all_years,
+REFPROMO,NA,Conflict with work,0,not_fielded_all_years,
+RELIGINF,NA,Miscellaneous topics,0,not_fielded_all_years,
+SPKHOMO,Civil Liberties & Government,Civil liberties (Stouffer),0,not_fielded_all_years,"Civil liberties item: allow homosexual to speak in community. Dropped from 2022/2024 GSS; not in 2024 codebook. Companion items SPKATH, SPKRAC, SPKCOM, SPKMSLM are in the analytic core."
+SPKMIL,Civil Liberties & Government,Civil liberties (Stouffer),0,not_fielded_all_years,"Civil liberties item: allow militarist to speak in community. Dropped from 2022/2024 GSS; not in 2024 codebook. Companion items SPKATH, SPKRAC, SPKCOM, SPKMSLM are in the analytic core."
+SUICIDE3,Well-being & Life Orientations,Suicide,0,not_fielded_all_years,"Not fielded in 2024 (confirmed via 2024 codebook distribution tables). SUICIDE1, SUICIDE2, SUICIDE4 are in the analytic core. Would require 2022-only analysis."
+USEWWW,NA,Computer and internet usage,0,not_fielded_all_years,
+WLTHHSPS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,
+WORKHSPS,Race & Inequality,Racial attitudes and stereotypes,0,not_fielded_all_years,
+WORKLESS,NA,Conflict with work,0,not_fielded_all_years,
+WWWHR,NA,Computer and internet usage,0,not_fielded_all_years,"Hours per week on internet — continuous item, not binary-recodable as attitude measure. Last fielded 2018; not in 2022/2024."
+WWWMIN,NA,Computer and internet usage,0,not_fielded_all_years,"Minutes per week on internet (companion to WWWHR) — continuous, not binary-recodable. Last fielded 2018; not in 2022/2024."
+MARHOMO,Social Attitudes & Morality,Sexual behavior,0,wording_experiment_variant,Pre-2022 name for MARSAME. Renamed in 2022 GSS; wording otherwise identical. See MARSAME notes for harmonization details.
+MARSAME,Social Attitudes & Morality,Sexual behavior,0,wording_experiment_variant,Rename of MARHOMO (pre-2022). Scale: 1=Strongly Agree to 5=Strongly Disagree. ~65% NOT APPLICABLE skip (asked in sequence with PILLOK/SPANKING). Wording identical to MARHOMO; series substantively continuous. MARSAMEY is a 2022/2024 wording experiment variant ('same-sex couple' replacing 'homosexual couple'). To include in persistence analysis: harmonize MARHOMO (2016/2018) with MARSAME (2022/2024) and handle skip pattern (same concern as HAPMAR/HAPCOHAB).
+MARSAMEY,Social Attitudes & Morality,Sexual behavior,0,wording_experiment_variant,Wording experiment variant of MARSAME: replaces 'homosexual couple' with 'same-sex couple'. Form 2 only. Parent variable MARSAME is the analysis item.
+XMOVIEY,Social Attitudes & Morality,Sexual behavior,0,wording_experiment_variant,Wording experiment variant of XMOVIE: replaces 'X-rated movie' with 'pornography' and includes internet as a source. Form 2 only in 2022/2024. Parent variable XMOVIE is the analysis item.

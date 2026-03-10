@@ -1,0 +1,20 @@
+project:
+  type: default
+  output-dir: outputs
+
+render:
+  - 01_data_preparation.qmd
+  - 02_weights.qmd
+  - 03_composition.qmd
+  - 04_mode_gaps.qmd
+  - 05_persistence.qmd
+  - appendix_forest_plots.qmd
+
+format:
+  html:
+    theme: cosmo
+    embed-resources: true
+    toc: true
+    toc-float: true
+    code-fold: true
+    code-tools: true

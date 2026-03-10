@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"cat\\(\" /Users/resty/Desktop/socarxiv_claude/*.qmd /Users/resty/Desktop/socarxiv_claude/*.R)",
+      "Bash(grep -n \"library\\(\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n \"print\\(\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -En '\\(file\\\\.path|\"\"outputs|\"\"data|\\\\.dta\"\"|\\\\.rds\"\"|\\\\.csv\"\"|\\\\.png\"\"\\)' /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -En '^\\\\s*out_' /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -En 'ggsave|write_' /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n \"r setup\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n \"results:\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n \"gtsave\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(head -12 /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n \"editor:\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n \"code-fold:\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -n 'analytic_core.csv' /Users/resty/Desktop/socarxiv_claude/*.qmd /Users/resty/Desktop/socarxiv_claude/*.R)",
+      "Bash(grep -n 'read_csv' /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(grep -rn \"print\\\\|cat\\(\" /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(wc -l /Users/resty/Desktop/socarxiv_claude/*.qmd)",
+      "Bash(ls /Users/resty/Desktop/socarxiv_claude/*.Rproj)"
+    ]
+  }
+}

@@ -1,0 +1,296 @@
+---
+title: "GSS Variable Recoding and Preparation (2016–2024)"
+editor: visual
+---
+
+## Overview
+
+Recodes subjective items from the 2016–2024 General Social Survey cumulative file into binary (`c_`-prefixed) outcome variables and saves the result as an RDS for downstream analysis. Three operations are applied per variable:
+
+1.  **Coalescing** — merges split-ballot variants (Form 1/2, visual/non-visual flashcard, `-g`/`-y` suffixes) into a single variable.
+2.  **Binarization** — converts ordinal scales into 0/1 outcomes using distribution-based split rules.
+3.  **Filtering** — restricts to 2016, 2018, 2022, and 2024.
+
+Only variables in the analytic core (`data/analytic_core.csv`, `analytic_core == 1`) are used in downstream files; recodes for excluded items are omitted here.
+
+------------------------------------------------------------------------
+
+## 1. Setup and Data Loading
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00_setup.R")
+
+if (file.exists(GSS_DTA_PATH)) {
+  gss_data <- read_dta(GSS_DTA_PATH)
+} else {
+  stop("Data file not found: ", GSS_DTA_PATH)
+}
+```
+
+------------------------------------------------------------------------
+
+## 2. Recoding Functions
+
+```{r functions}
+#' Replicates Stata's `recode` command for binary variables.
+gssrecode <- function(data, vars, to0, to1) {
+  for (var in vars) {
+    if (!var %in% names(data)) {
+      warning(paste0("Variable '", var, "' not found. Skipping."))
+      next
+    }
+    new_var_name <- paste0("c_", var)
+    data <- data %>%
+      mutate(!!new_var_name := case_when(
+        .data[[var]] %in% to0 ~ 0,
+        .data[[var]] %in% to1 ~ 1,
+        TRUE ~ NA_real_
+      ))
+  }
+  return(data)
+}
+
+#' Recodes 3-category variables into a binary split based on distribution.
+gss3cats <- function(data, vars) {
+  for (var in vars) {
+    if (!var %in% names(data)) next
+    num1 <- sum(data[[var]] == 1, na.rm = TRUE)
+    num3 <- sum(data[[var]] == 3, na.rm = TRUE)
+    if (num1 >= num3) {
+      data <- gssrecode(data, var, to0 = c(2, 3), to1 = 1)
+    } else {
+      data <- gssrecode(data, var, to0 = 3, to1 = c(1, 2))
+    }
+  }
+  return(data)
+}
+
+#' Recodes 5-category variables into a binary split based on distribution.
+gss5cats <- function(data, vars) {
+  for (var in vars) {
+    if (!var %in% names(data)) next
+    num12 <- sum(data[[var]] %in% c(1, 2), na.rm = TRUE)
+    num45 <- sum(data[[var]] %in% c(4, 5), na.rm = TRUE)
+    if (num12 >= num45) {
+      data <- gssrecode(data, var, to0 = c(3, 4, 5), to1 = c(1, 2))
+    } else {
+      data <- gssrecode(data, var, to0 = c(4, 5), to1 = c(1, 2, 3))
+    }
+  }
+  return(data)
+}
+
+#' Recodes 7-category variables into a binary split based on distribution.
+gss7cats <- function(data, vars) {
+  for (var in vars) {
+    if (!var %in% names(data)) next
+    num123 <- sum(data[[var]] %in% c(1, 2, 3), na.rm = TRUE)
+    num567 <- sum(data[[var]] %in% c(5, 6, 7), na.rm = TRUE)
+    if (num123 >= num567) {
+      data <- gssrecode(data, var, to0 = c(4, 5, 6, 7), to1 = c(1, 2, 3))
+    } else {
+      data <- gssrecode(data, var, to0 = c(5, 6, 7), to1 = c(1, 2, 3, 4))
+    }
+  }
+  return(data)
+}
+```
+
+------------------------------------------------------------------------
+
+## 3. Recoding
+
+### National Spending Items
+
+Coalesces Form 2 variants (`-y` suffix) into main variable names before recoding.
+
+```{r nat-spend}
+gss_data <- gss_data %>%
+  mutate(
+    natspac  = if_else(form == 2 & !is.na(natspacy),  natspacy,  natspac),
+    natenvir = if_else(form == 2 & !is.na(natenviy),  natenviy,  natenvir),
+    natheal  = if_else(form == 2 & !is.na(nathealy),  nathealy,  natheal),
+    natdrug  = if_else(form == 2 & !is.na(natdrugy),  natdrugy,  natdrug),
+    nateduc  = if_else(form == 2 & !is.na(nateducy),  nateducy,  nateduc),
+    natarms  = if_else(form == 2 & !is.na(natarmsy),  natarmsy,  natarms),
+    natrace  = if_else(form == 2 & !is.na(natracey),  natracey,  natrace),
+    nataid   = if_else(form == 2 & !is.na(nataidy),   nataidy,   nataid),
+    natfare  = if_else(form == 2 & !is.na(natfarey),  natfarey,  natfare),
+    natcity  = if_else(form == 2 & !is.na(natcityy),  natcityy,  natcity),
+    natcrime = if_else(form == 2 & !is.na(natcrimy),  natcrimy,  natcrime)
+  )
+
+natspend_vars <- c("natspac", "natenvir", "natheal", "natcity", "natcrime",
+                   "natdrug", "nateduc", "natrace", "natarms", "nataid",
+                   "natfare", "natroad", "natsoc", "natchld", "natsci", "natenrgy")
+gss_data <- gss3cats(gss_data, vars = natspend_vars)
+```
+
+### Confidence and Civil Liberties
+
+Handles Form 1/2 and visual/non-visual (`-v`/`-nv`) flashcard experiments.
+
+```{r civil-liberties}
+gss_data <- gss_data %>%
+  mutate(
+    conlabor = if_else(form == 2 & !is.na(conlabory), conlabory, conlabor),
+    colcom   = if_else(form == 2 & !is.na(colcomy),   colcomy,   colcom),
+    spkath   = if_else(form == 2 & !is.na(spkathy),   spkathy,   spkath),
+    spkrac   = if_else(form == 2 & !is.na(spkracy),   spkracy,   spkrac),
+    spkcom   = if_else(form == 2 & !is.na(spkcomy),   spkcomy,   spkcom),
+    spkmslm  = if_else(form == 2 & !is.na(spkmslmy),  spkmslmy,  spkmslm),
+    libath   = if_else(form == 2 & !is.na(libathy),   libathy,   libath),
+    librac   = if_else(form == 2 & !is.na(libracy),   libracy,   librac),
+    libcom   = if_else(form == 2 & !is.na(libcomy),   libcomy,   libcom),
+    libmslm  = if_else(form == 2 & !is.na(libmslmy),  libmslmy,  libmslm),
+    letdie1  = if_else(form == 2 & !is.na(letdie1y),  letdie1y,  letdie1),
+    fepol    = if_else(!is.na(fepolv),   fepolv,   if_else(!is.na(fepolnv),   fepolnv,   fepol)),
+    racopen  = if_else(!is.na(racopenv), racopenv, if_else(!is.na(racopennv), racopennv, racopen)),
+    bible    = if_else(!is.na(biblev),   biblev,   if_else(!is.na(biblenv),   biblenv,   bible)),
+    divlaw   = if_else(!is.na(divlawv),  divlawv,  if_else(!is.na(divlawnv),  divlawnv,  divlaw)),
+    kidssol  = if_else(!is.na(kidssolv) & kidssolv <= 5, kidssolv,
+                       if_else(!is.na(kidssolnv) & kidssolnv <= 5, kidssolnv, kidssol)),
+    grass    = if_else(!is.na(grassv),    grassv,    if_else(!is.na(grassnv),    grassnv,    grass)),
+    prayer   = if_else(!is.na(prayerv),   prayerv,   if_else(!is.na(prayernv),   prayernv,   prayer)),
+    postlife = if_else(!is.na(postlifev), postlifev, if_else(!is.na(postlifenv), postlifenv, postlife)),
+    fair     = if_else(!is.na(fairv),     fairv,     if_else(!is.na(fairnv),     fairnv,     fair)),
+    helpful  = if_else(!is.na(helpfulv),  helpfulv,  if_else(!is.na(helpfulnv),  helpfulnv,  helpful)),
+    trust    = if_else(!is.na(trustv),    trustv,    if_else(!is.na(trustnv),    trustnv,    trust)),
+    getahead = if_else(!is.na(getaheadv), getaheadv, if_else(!is.na(getaheadnv), getaheadnv, getahead)),
+    courts   = if_else(!is.na(courtsv),   courtsv,   if_else(!is.na(courtsnv),   courtsnv,   courts))
+  )
+
+confidence_vars <- c("confinan", "conbus", "conclerg", "coneduc", "confed",
+                     "conlabor", "conpress", "conmedic", "contv", "conjudge",
+                     "consci", "conlegis", "conarmy")
+gss_data <- gss3cats(gss_data, vars = confidence_vars)
+
+gss_data <- gssrecode(gss_data, vars = c("colath", "colrac", "colcom", "colmslm"), to0 = 4, to1 = 5)
+gss_data <- gssrecode(gss_data, vars = c("libath", "librac", "libcom", "libmslm", "fepol", "racopen"), to0 = 1, to1 = 2)
+gss_data <- gssrecode(gss_data, vars = c("spkath", "spkrac", "spkcom", "spkmslm"), to0 = 1, to1 = 2)
+```
+
+### Abortion and Police
+
+Form 1 grid (`-g`) and Form 2 gender-neutral (`-y`) variants.
+
+```{r abortion-police}
+abortion_vars <- c("abdefect", "abnomore", "abhlth", "abpoor", "abrape", "absingle", "abany")
+for (var in abortion_vars) {
+  source_var <- paste0(var, "g")
+  gss_data <- gss_data %>%
+    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+}
+gss_data <- gssrecode(gss_data, vars = abortion_vars, to0 = 2, to1 = 1)
+
+police_vars <- c("polhitok", "polabuse", "polattak")
+for (var in police_vars) {
+  source_var <- paste0(var, "y")
+  gss_data <- gss_data %>%
+    mutate(!!sym(var) := if_else(form == 2 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+}
+gss_data <- gssrecode(gss_data, vars = c("polhitok", "polabuse", "polmurdr", "polattak", "polescap"), to0 = 2, to1 = 1)
+```
+
+### Race and Ethnicity
+
+```{r race-ethnicity}
+# Childrearing
+gss_data <- gss5cats(gss_data, vars = c("helpoth", "obey", "thnkself", "workhard", "popular"))
+
+# RACDIF -x variables (Form 1 experimental wording); racdif1-4 only.
+# racdif5 (new in 2024, not fielded in 2016/2018) is excluded from analytic core.
+racdif_vars <- c("racdif1", "racdif2", "racdif3", "racdif4")
+for (var in racdif_vars) {
+  source_var <- paste0(var, "x")
+  gss_data <- gss_data %>%
+    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+}
+gss_data <- gssrecode(gss_data, vars = racdif_vars, to0 = 2, to1 = 1)
+
+# Ethnic group comparisons (wlthwhts/blks, workwhts/blks only;
+# wlthhsps and workhsps not fielded in 2016/2018)
+ethnic_vars <- c("wlthwhts", "wlthblks", "workwhts", "workblks")
+gss_data <- gss7cats(gss_data, vars = c(ethnic_vars, "partyid"))
+
+gss_data <- gss3cats(gss_data, vars = "discaff")
+gss_data <- gss5cats(gss_data, vars = "wrkwayup")
+```
+
+### Gender, Sex, and Suicide
+
+```{r gender-sex-suicide}
+gss_data <- gss5cats(gss_data, vars = "fehire")
+gss_data <- gssrecode(gss_data,
+  vars = c("fechld", "fepresch", "meovrwrk", "fejobaff", "discaffm", "discaffw", "fefam", "affrmact"),
+  to0 = 1:2, to1 = 3:4
+)
+
+gss_data <- gssrecode(gss_data, vars = c("homosex", "teensex"), to0 = 1:2, to1 = 3:4)
+gss_data <- gssrecode(gss_data, vars = "premarsx", to0 = 1:3, to1 = 4)
+gss_data <- gssrecode(gss_data, vars = "xmarsex",  to0 = 1,   to1 = 2:4)
+gss_data <- gss3cats(gss_data,  vars = "pornlaw")
+gss_data <- gssrecode(gss_data, vars = "sexeduc",  to0 = 2, to1 = 1)
+gss_data <- gssrecode(gss_data, vars = "pillok",   to0 = 3:4, to1 = 1:2)
+
+# Suicide grid variables (suicide3 not fielded in 2024)
+suicide_grid_vars <- c("suicide1", "suicide2", "suicide4")
+for (var in suicide_grid_vars) {
+  source_var <- paste0(var, "g")
+  gss_data <- gss_data %>%
+    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+}
+gss_data <- gssrecode(gss_data, vars = c("letdie1", "suicide1", "suicide2", "suicide4"), to0 = 2, to1 = 1)
+```
+
+### Miscellaneous Items
+
+```{r misc-recodes}
+gss_data <- gss_data %>%
+  mutate(xmovie = if_else(form == 2 & !is.na(xmoviey), xmoviey, xmovie))
+
+misc_yesno_vars <- c("cappun", "gunlaw", "grass", "postlife", "prayer",
+                     "richwork", "fear", "reborn", "xmovie")
+gss_data <- gssrecode(gss_data, vars = misc_yesno_vars, to0 = 2, to1 = 1)
+
+misc_4cat_vars <- c("spanking", "class", "relpersn", "sprtprsn", "joblose", "health", "satjob")
+gss_data <- gssrecode(gss_data, vars = misc_4cat_vars, to0 = 1:2, to1 = 3:4)
+
+# letin1a retained; letinhsp and letinasn excluded (not fielded in 2016/2018)
+misc_5cat_vars <- c("helppoor", "helpnot", "helpsick", "letin1a",
+                    "helpblk", "parsol", "kidssol", "goodlife", "finrela")
+gss_data <- gss5cats(gss_data, vars = misc_5cat_vars)
+
+misc_depends_vars <- c("fair", "helpful", "trust")
+gss_data <- gssrecode(gss_data, vars = misc_depends_vars, to0 = 1, to1 = 2)
+
+gss_data <- gssrecode(gss_data, vars = "eqwlth",   to0 = 1:3, to1 = 4:7)
+gss_data <- gssrecode(gss_data, vars = "polviews", to0 = 1:4, to1 = 5:7)
+gss_data <- gssrecode(gss_data, vars = "getahead", to0 = 2:3, to1 = 1)
+gss_data <- gssrecode(gss_data, vars = "tax",      to0 = 2:3, to1 = 1)
+gss_data <- gssrecode(gss_data, vars = "life",     to0 = 1,   to1 = 2:3)
+
+# adoptus, immcrime, immjobs, immfate excluded (not fielded in 2016/2018)
+# hapmar, hapcohab excluded (conditionally fielded — structural skip confounded with mode)
+gss_data <- gss3cats(gss_data, vars = c("happy", "satfin", "finalter", "jobfind", "divlaw"))
+gss_data <- gssrecode(gss_data, vars = "courts", to0 = c(1, 3), to1 = 2)
+
+gss_data <- gssrecode(gss_data, vars = "attend",   to0 = 0:4, to1 = 5:8)
+gss_data <- gssrecode(gss_data, vars = "pray",     to0 = 4:6, to1 = 1:3)
+gss_data <- gssrecode(gss_data, vars = "bible",    to0 = 2:4, to1 = 1)
+gss_data <- gssrecode(gss_data, vars = "relactiv", to0 = 1:4, to1 = 5:10)
+gss_data <- gssrecode(gss_data, vars = "chldidel", to0 = 0:2, to1 = c(3:8))
+gss_data <- gssrecode(gss_data, vars = "rank",     to0 = 6:10, to1 = 1:5)
+gss_data <- gssrecode(gss_data, vars = "god",      to0 = 1:3,  to1 = 4:6)
+```
+
+------------------------------------------------------------------------
+
+## 4. Filter and Export
+
+```{r export}
+gss_data_16to24 <- gss_data %>%
+  filter(year %in% c(2016, 2018, 2022, 2024))
+
+saveRDS(gss_data_16to24, GSS_RDS_PATH)
+```

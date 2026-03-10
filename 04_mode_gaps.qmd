@@ -1,0 +1,635 @@
+---
+title: "GSS Mode Gaps: Selection and Substantive Effects (2022–2024)"
+editor: visual
+---
+
+## Overview
+
+This file produces all §2 outputs for the paper:
+
+-   **§2.1 — Section 1**: Logistic regression predicting web vs. FTF/Phone completion, with odds ratios and a Shapley value decomposition of predictor importance.
+-   **§2.2 — Section 2**: Mode gaps in substantive survey responses before and after demographic adjustment across 137 outcome variables.
+
+------------------------------------------------------------------------
+
+## Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00_setup.R")
+
+# File-specific libraries not covered by 00_setup.R
+library(broom)
+library(gt)
+library(dominanceanalysis)
+
+# Output directories
+out_fig    <- "outputs/figures"
+out_tables <- "outputs/tables"
+out_data   <- "outputs/data"
+for (d in c(out_fig, out_tables, out_data)) {
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+}
+```
+
+------------------------------------------------------------------------
+
+## Shared Data Loading and Recodes
+
+```{r load-data, message=FALSE, warning=FALSE}
+if (!file.exists(GSS_RDS_PATH)) stop("RDS not found: ", GSS_RDS_PATH)
+gss_data <- readRDS(GSS_RDS_PATH)
+```
+
+```{r shared-recodes, message=FALSE, warning=FALSE}
+# Shared analytic sample for both sections.
+# recode_demographics() from 00_setup.R supplies: mode_fctr, agegrp,
+# degree_cat, marital_cat, w_hisp_race, f_born, f_sex, f_region.
+analysis_data <- gss_data %>%
+  filter(year %in% c(2022, 2024)) %>%
+  recode_demographics() %>%
+  filter(
+    !is.na(wtssps),
+    !is.na(mode_fctr),
+    !is.na(year),
+    !is.na(agegrp),
+    !is.na(degree_cat),
+    !is.na(marital_cat),
+    !is.na(w_hisp_race),
+    !is.na(f_born),
+    !is.na(f_sex),
+    !is.na(f_region)
+  )
+
+tibble(
+  Statistic = c("Total (complete cases)", "FTF/Phone", "Web"),
+  N = c(
+    nrow(analysis_data),
+    sum(analysis_data$mode_fctr == "f2fp", na.rm = TRUE),
+    sum(analysis_data$mode_fctr == "web",  na.rm = TRUE)
+  )
+) |> gt() |> tab_header(title = "Analytic sample size")
+```
+
+------------------------------------------------------------------------
+
+## Section 1: Predicting Mode of Completion (§2.1)
+
+This section examines whether and how strongly demographic characteristics predict a respondent's likelihood of completing via Web versus FTF/Phone. The full logistic model estimates ORs for each predictor; the Shapley decomposition (Table 1) quantifies each predictor's unique contribution to overall model fit.
+
+### Logistic Regression and Shapley Decomposition Predicting Web Completion
+
+```{r full-logistic-model, message=FALSE, warning=FALSE}
+# Section 1 uses a numeric 0/1 outcome (mode_fctr in recode_demographics()
+# is a factor; recode here for glm compatibility in the selection model).
+weighting_vars <- c("marital_cat", "agegrp", "degree_cat",
+                    "w_hisp_race", "f_born", "f_sex", "f_region")
+
+selection_data <- analysis_data %>%
+  mutate(
+    mode_bin = if_else(mode_fctr == "web", 1L, 0L)
+  )
+
+full_model_formula <- as.formula(
+  paste("mode_bin ~ year +", paste(weighting_vars, collapse = " + "))
+)
+
+full_model <- glm(
+  full_model_formula,
+  family = binomial(link = "logit"),
+  data   = selection_data
+)
+
+tidy(full_model, conf.int = TRUE) %>%
+  gt() %>%
+  tab_header(
+    title    = "Logistic Regression: Predictors of Web Completion",
+    subtitle = "Log-odds coefficients (mode_bin ~ year + demographics), GSS 2022–2024"
+  ) %>%
+  fmt_number(columns = c(estimate, std.error, statistic, conf.low, conf.high), decimals = 3) %>%
+  fmt_number(columns = p.value, decimals = 4) %>%
+  cols_label(
+    term      = "Term",
+    estimate  = "Log-Odds",
+    std.error = "SE",
+    statistic = "z",
+    p.value   = "p",
+    conf.low  = "CI Low",
+    conf.high = "CI High"
+  )
+```
+
+```{r dominance-analysis, message=FALSE, warning=FALSE}
+# PAPER: Table 1 — Shapley decomposition
+da_results <- dominanceAnalysis(full_model, target = "r2.m")
+da_stats   <- da_results$contribution.average$r2.m
+
+da_df <- data.frame(
+  Variable     = names(da_stats),
+  Contribution = as.numeric(da_stats)
+) %>%
+  mutate(
+    Rank           = rank(-Contribution),
+    Percent_of_Fit = (Contribution / sum(Contribution)) * 100
+  ) %>%
+  arrange(desc(Contribution))
+
+da_df %>%
+  gt() %>%
+  tab_header(
+    title    = "Shapley Decomposition of Mode Selection Model",
+    subtitle = "Average marginal R² contribution per predictor (McFadden)"
+  ) %>%
+  fmt_number(columns = Contribution, decimals = 4) %>%
+  fmt_number(columns = Percent_of_Fit, decimals = 1) %>%
+  fmt_integer(columns = Rank) %>%
+  cols_label(
+    Variable       = "Predictor",
+    Contribution   = "Avg. Marginal R²",
+    Rank           = "Rank",
+    Percent_of_Fit = "% of Fit"
+  )
+```
+
+```{r table1-combined, message=FALSE, warning=FALSE}
+# PAPER: Table 1 — Merge ORs and Shapley values
+
+# 1. Extract full-model ORs collapsed to variable level
+or_df <- tidy(full_model, exponentiate = TRUE, conf.int = TRUE) %>%
+  filter(term != "(Intercept)") %>%
+  mutate(
+    variable = case_when(
+      str_starts(term, "degree_cat")  ~ "degree_cat",
+      str_starts(term, "marital_cat") ~ "marital_cat",
+      str_starts(term, "agegrp")      ~ "agegrp",
+      str_starts(term, "year")        ~ "year",
+      str_starts(term, "w_hisp_race") ~ "w_hisp_race",
+      str_starts(term, "f_born")      ~ "f_born",
+      str_starts(term, "f_region")    ~ "f_region",
+      str_starts(term, "f_sex")       ~ "f_sex",
+      TRUE ~ term
+    )
+  )
+
+or_summary <- or_df %>%
+  group_by(variable) %>%
+  summarise(
+    OR      = exp(mean(log(estimate))),
+    CI_low  = min(conf.low),
+    CI_high = max(conf.high),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    `95% CI` = paste0(
+      "[", formatC(CI_low,  digits = 2, format = "f"), ", ",
+           formatC(CI_high, digits = 2, format = "f"), "]"
+    )
+  )
+
+# 2. Join with Shapley values
+table1_data <- or_summary %>%
+  left_join(
+    da_df %>% select(Variable, Percent_of_Fit, Rank) %>%
+      rename(variable = Variable),
+    by = "variable"
+  ) %>%
+  arrange(desc(Percent_of_Fit))
+
+# 3. Render as gt table
+gt_table1 <- table1_data %>%
+  select(variable, OR, `95% CI`, Percent_of_Fit, Rank) %>%
+  gt() %>%
+  tab_header(
+    title    = "Predictors of Web Survey Completion",
+    subtitle = "Logistic regression odds ratios and Shapley value decomposition, GSS 2022–2024"
+  ) %>%
+  fmt_number(columns = OR, decimals = 2) %>%
+  fmt_number(columns = Percent_of_Fit, decimals = 1) %>%
+  fmt_integer(columns = Rank) %>%
+  cols_label(
+    variable       = "Predictor",
+    OR             = "OR (geom. mean)",
+    `95% CI`       = "95% CI",
+    Percent_of_Fit = "% of Fit (Shapley)",
+    Rank           = "Rank"
+  ) %>%
+  tab_source_note(
+    "OR = geometric mean of exponentiated coefficients within factor variable. CI = [min, max] across contrasts. Shapley contribution = average marginal R\u00b2 across all 2^k subset models (McFadden)."
+  ) %>%
+  tab_options(table.font.size = 11)
+
+gt_table1
+
+gtsave(
+  gt_table1,
+  file.path(out_tables, "logistic_shapley_predictors.png"),
+  expand = 10
+)
+```
+
+------------------------------------------------------------------------
+
+## Section 2: Mode Gaps in Substantive Responses (§2.2)
+
+This section estimates the association between survey mode and each binary outcome variable, comparing bivariate mode gaps to gaps after demographic adjustment. Both models are weighted by `wtssps`.
+
+### Outcome Variable Definitions
+
+```{r define-formulas}
+# Analytic core variable set — defined in 00_setup.R, sourced from
+# data/analytic_core.csv (analytic_core == 1). Filtered to variables
+# actually present in the analysis dataset.
+c_vars <- intersect(ANALYTIC_CORE_VARS, names(analysis_data))
+
+# Model formula strings
+bivariate_formula_part <- "mode_fctr"
+controls_formula_part  <- "mode_fctr + year + agegrp + degree_cat + marital_cat + w_hisp_race + f_born + f_sex + f_region"
+```
+
+### Bivariate Model Loop
+
+```{r run-bivar, warning=FALSE}
+all_model_results_bivariate <- list()
+
+for (var in c_vars) {
+
+  if (!var %in% names(analysis_data)) next
+  analysis_data[[var]] <- as.numeric(as.character(analysis_data[[var]]))
+  unique_vals <- unique(analysis_data[[var]][!is.na(analysis_data[[var]])])
+  if (length(unique_vals) < 2) next
+  if (!all(unique_vals %in% c(0, 1))) next
+
+  model_fit <- tryCatch(
+    glm(
+      as.formula(paste(var, "~", bivariate_formula_part)),
+      family  = binomial(link = "logit"),
+      data    = analysis_data,
+      weights = wtssps
+    ),
+    error = function(e) NULL
+  )
+
+  if (!is.null(model_fit)) {
+    tryCatch({
+      coef_df <- as.data.frame(summary(model_fit)$coefficients) %>%
+        rownames_to_column("term")
+      ci_df   <- as.data.frame(confint.default(model_fit)) %>%
+        rownames_to_column("term")
+      names(coef_df) <- c("term", "estimate", "std.error", "statistic", "p.value")
+      names(ci_df)   <- c("term", "conf.low", "conf.high")
+
+      all_model_results_bivariate[[var]] <- left_join(coef_df, ci_df, by = "term") %>%
+        mutate(variable = var, model_type = "Bivariate") %>%
+        select(variable, model_type, term, estimate, std.error, statistic, p.value, conf.low, conf.high)
+    }, error = function(e) NULL)
+  }
+}
+
+final_model_results_bivariate <- bind_rows(all_model_results_bivariate) %>%
+  group_by(term) %>%
+  mutate(
+    p.value.adj = if_else(
+      term == "mode_fctrweb",
+      p.adjust(p.value, method = "holm"),
+      NA_real_
+    )
+  ) %>%
+  ungroup()
+```
+
+### Full Model Loop
+
+```{r run-full, warning=FALSE}
+all_model_results_full <- list()
+
+for (var in c_vars) {
+
+  if (!var %in% names(analysis_data)) next
+  analysis_data[[var]] <- as.numeric(as.character(analysis_data[[var]]))
+  unique_vals <- unique(analysis_data[[var]][!is.na(analysis_data[[var]])])
+  if (length(unique_vals) < 2) next
+  if (!all(unique_vals %in% c(0, 1))) next
+
+  model_fit <- tryCatch(
+    glm(
+      as.formula(paste(var, "~", controls_formula_part)),
+      family  = binomial(link = "logit"),
+      data    = analysis_data,
+      weights = wtssps
+    ),
+    error = function(e) NULL
+  )
+
+  if (!is.null(model_fit)) {
+    tryCatch({
+      coef_df <- as.data.frame(summary(model_fit)$coefficients) %>%
+        rownames_to_column("term")
+      ci_df   <- as.data.frame(confint.default(model_fit)) %>%
+        rownames_to_column("term")
+      names(coef_df) <- c("term", "estimate", "std.error", "statistic", "p.value")
+      names(ci_df)   <- c("term", "conf.low", "conf.high")
+
+      all_model_results_full[[var]] <- left_join(coef_df, ci_df, by = "term") %>%
+        mutate(variable = var, model_type = "Full") %>%
+        select(variable, model_type, term, estimate, std.error, statistic, p.value, conf.low, conf.high)
+    }, error = function(e) NULL)
+  }
+}
+
+final_model_results_full <- bind_rows(all_model_results_full) %>%
+  group_by(term) %>%
+  mutate(
+    p.value.adj = if_else(
+      term == "mode_fctrweb",
+      p.adjust(p.value, method = "holm"),
+      NA_real_
+    )
+  ) %>%
+  ungroup()
+```
+
+### Significance Summaries
+
+```{r summary-bivar}
+p_vals_bivariate <- final_model_results_bivariate %>%
+  mutate(sig.check = !is.na(p.value) & p.value < 0.05) %>%
+  select(variable, term, sig.check)
+
+sig.chart_bivariate <- p_vals_bivariate %>%
+  group_by(term) %>%
+  summarise(
+    significant_count = sum(sig.check, na.rm = TRUE),
+    total_models      = n(),
+    sig.prop          = significant_count / total_models,
+    .groups = "drop"
+  ) %>%
+  arrange(desc(sig.prop))
+
+sig.chart_bivariate %>%
+  gt() %>%
+  tab_header(title = "Term significance (p < 0.05) — Bivariate model (wtssps)") %>%
+  fmt_number(columns = sig.prop, decimals = 3) %>%
+  cols_label(
+    term              = "Term",
+    significant_count = "Sig Count",
+    total_models      = "Total Models",
+    sig.prop          = "Sig Proportion"
+  )
+```
+
+```{r summary-full}
+p_vals_full <- final_model_results_full %>%
+  mutate(
+    sig.check     = !is.na(p.value)     & p.value     < 0.05,
+    sig.check.adj = !is.na(p.value.adj) & p.value.adj < 0.05
+  ) %>%
+  select(variable, term, sig.check, sig.check.adj, p.value, p.value.adj)
+
+sig.chart_full <- p_vals_full %>%
+  group_by(term) %>%
+  summarise(
+    significant_count      = sum(sig.check, na.rm = TRUE),
+    significant_count_holm = sum(sig.check.adj, na.rm = TRUE),
+    total_models           = n(),
+    sig.prop               = significant_count / total_models,
+    sig.prop.holm          = significant_count_holm / sum(!is.na(sig.check.adj)),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(sig.prop))
+
+sig.chart_full %>%
+  gt() %>%
+  tab_header(title = "Term significance (p < 0.05) — Full model (wtssps), with Holm correction for mode_fctrweb") %>%
+  fmt_number(columns = c(sig.prop, sig.prop.holm), decimals = 3) %>%
+  cols_label(
+    term                   = "Term",
+    significant_count      = "Sig Count",
+    significant_count_holm = "Sig Count (Holm)",
+    total_models           = "Total Models",
+    sig.prop               = "Sig Proportion",
+    sig.prop.holm          = "Sig Proportion (Holm)"
+  )
+```
+
+```{r mode-effect-detail}
+final_model_results_full %>%
+  filter(term == "mode_fctrweb") %>%
+  arrange(p.value) %>%
+  mutate(
+    sig_uncorrected = if_else(p.value < 0.05, "*", ""),
+    sig_holm        = if_else(!is.na(p.value.adj) & p.value.adj < 0.05, "*", "")
+  ) %>%
+  select(variable, estimate, std.error, statistic, p.value, p.value.adj,
+         sig_uncorrected, sig_holm) %>%
+  head(20) %>%
+  gt() %>%
+  tab_header(title = "Top 20 mode effects — Full model (wtssps)") %>%
+  fmt_number(columns = c(estimate, std.error, statistic, p.value, p.value.adj), decimals = 4) %>%
+  cols_label(
+    variable        = "Variable",
+    estimate        = "Estimate",
+    std.error       = "SE",
+    statistic       = "Statistic",
+    p.value         = "p-value",
+    p.value.adj     = "p-value (Holm)",
+    sig_uncorrected = "Sig (α=0.05)",
+    sig_holm        = "Sig (Holm)"
+  )
+```
+
+```{r compare-sig}
+comparison <- p_vals_bivariate %>%
+  rename(bivar.sig = sig.check) %>%
+  left_join(
+    p_vals_full %>% select(variable, term, sig.check) %>% rename(full.sig = sig.check),
+    by = join_by(variable, term)
+  ) %>%
+  filter(term == "mode_fctrweb") %>%
+  mutate(
+    pattern = case_when(
+      bivar.sig  &  full.sig ~ "Significant in both (measurement effect)",
+      bivar.sig  & !full.sig ~ "Bivariate only (compositional)",
+      !bivar.sig &  full.sig ~ "Full only (suppressed bivariate)",
+      TRUE                   ~ "Non-significant in both"
+    )
+  ) %>%
+  select(variable, bivar.sig, full.sig, pattern) %>%
+  arrange(pattern, variable)
+
+# Pattern summary
+comparison %>%
+  count(pattern) %>%
+  mutate(prop = round(n / sum(n), 3)) %>%
+  gt() %>%
+  tab_header(title = "Mode effect pattern summary (mode_fctrweb)")
+
+# Variable-level table (excluding non-significant in both)
+comparison %>%
+  filter(pattern != "Non-significant in both") %>%
+  gt() %>%
+  tab_header(title = "Variables with mode effect (mode_fctrweb) — excluding non-significant in both") %>%
+  cols_label(
+    variable  = "Variable",
+    bivar.sig = "Sig Bivariate",
+    full.sig  = "Sig Full",
+    pattern   = "Pattern"
+  )
+```
+
+### Diagnostic Summaries
+
+```{r figure6-diagnostics}
+# Construct mode_gaps_comparison for diagnostics and Figure 3
+bivariate_mode_effects <- final_model_results_bivariate %>%
+  filter(term == "mode_fctrweb") %>%
+  select(variable,
+         estimate_bivariate = estimate,
+         se_bivariate       = std.error,
+         p_bivariate        = p.value,
+         p_bivariate_adj    = p.value.adj)
+
+full_mode_effects <- final_model_results_full %>%
+  filter(term == "mode_fctrweb") %>%
+  select(variable,
+         estimate_full = estimate,
+         se_full       = std.error,
+         p_full        = p.value,
+         p_full_adj    = p.value.adj)
+
+mode_gaps_comparison <- bivariate_mode_effects %>%
+  inner_join(full_mode_effects, by = "variable") %>%
+  mutate(
+    sig_bivariate = !is.na(p_bivariate_adj) & p_bivariate_adj < 0.05,
+    sig_full      = !is.na(p_full_adj)      & p_full_adj      < 0.05,
+    significance_pattern = case_when(
+      sig_bivariate &  sig_full ~ "Significant (Both)",
+      sig_bivariate & !sig_full ~ "Reduced by Controls",
+     !sig_bivariate &  sig_full ~ "Emerged with Controls",
+      TRUE                      ~ "Not Significant"
+    ),
+    gap_change    = estimate_full - estimate_bivariate,
+    gap_reduction = abs(estimate_bivariate) - abs(estimate_full),
+    var_display   = gsub("^c_", "", variable) %>% toupper()
+  )
+
+# Top 10 persistent gaps (cited §2.2)
+persistent_gaps <- mode_gaps_comparison %>%
+  filter(sig_full) %>%
+  arrange(desc(abs(estimate_full))) %>%
+  head(10) %>%
+  select(var_display, estimate_bivariate, estimate_full, gap_reduction, significance_pattern)
+
+persistent_gaps %>%
+  gt() %>%
+  tab_header(title = "Top 10 variables with largest persistent mode gaps after demographic adjustment") %>%
+  fmt_number(columns = where(is.numeric), decimals = 4)
+
+# Variables where adjustment eliminated gaps (cited §2.2)
+eliminated_gaps <- mode_gaps_comparison %>%
+  filter(significance_pattern == "Reduced by Controls") %>%
+  arrange(desc(gap_reduction)) %>%
+  head(10) %>%
+  select(var_display, estimate_bivariate, estimate_full, gap_reduction)
+
+eliminated_gaps %>%
+  gt() %>%
+  tab_header(title = "Top 10 variables where demographic adjustment eliminated mode gaps") %>%
+  fmt_number(columns = where(is.numeric), decimals = 4)
+```
+
+### Mode Gaps Before and After Demographic Adjustment
+
+```{r mode-gaps-scatter, fig.width=10, fig.height=10}
+# Significance pattern summary
+mode_gaps_comparison %>%
+  count(significance_pattern) %>%
+  mutate(pct = round(n / sum(n) * 100, 1)) %>%
+  gt() %>%
+  tab_header(title = paste0("Mode gap significance patterns — ", nrow(mode_gaps_comparison), " variables")) %>%
+  cols_label(significance_pattern = "Significance Pattern", n = "N", pct = "%")
+
+mode_gaps_plot <- mode_gaps_comparison %>%
+  filter(variable != "c_discaffw") %>% 
+  mutate(
+    plot_x = if_else(estimate_bivariate < 0, -estimate_bivariate, estimate_bivariate),
+    plot_y = if_else(estimate_full < 0, -estimate_full,      estimate_full)
+  )
+
+
+fig3 <- ggplot(
+  mode_gaps_plot,
+  aes(x = plot_x, y = plot_y,
+      color = significance_pattern, shape = significance_pattern)
+) +
+  geom_abline(intercept = 0, slope = 1,
+              linetype = "dashed", color = "gray50", linewidth = 0.8) +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "gray30", linewidth = 0.5) +
+  geom_vline(xintercept = 0,
+             linetype = "solid", color = "gray30", linewidth = 0.5) +
+  geom_point(size = 3.5, alpha = 0.7) +
+  scale_color_manual(
+    values = c(
+      "Significant (Both)"    = "#D95F02",
+      "Reduced by Controls"   = "#1B9E77",
+      "Emerged with Controls" = "#7570B3",
+      "Not Significant"       = "#999999"
+    ),
+    name = "Significance Pattern"
+  ) +
+  scale_shape_manual(
+    values = c(
+      "Significant (Both)"    = 16,
+      "Reduced by Controls"   = 17,
+      "Emerged with Controls" = 15,
+      "Not Significant"       = 1
+    ),
+    name = "Significance Pattern"
+  ) +
+  labs(
+    x        = "Raw Mode Gap\n(Bivariate Model Coefficient)",
+    y        = "Adjusted Mode Gap\n(Full Model Coefficient with Demographic Controls)",
+    caption  = paste0(
+      "Points on diagonal = adjustment has no effect. Below diagonal = gap reduced by controls. ",
+      "Above diagonal = gap increased by controls.\nN = ", nrow(mode_gaps_comparison), " variables."
+    )
+  ) +
+  coord_equal() +
+  annotate(
+    "text",
+    x     = min(mode_gaps_plot$plot_x) * 0.8,
+    y     = max(mode_gaps_plot$plot_y) * 0.9,
+    label = "Diagonal = No effect of adjustment\nAbove diagonal = Gap increases with controls\nBelow diagonal = Gap decreases with controls",
+    hjust = 0, size = 3, color = "gray30", fontface = "italic"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position  = "bottom",
+    legend.title     = element_text(face = "bold", size = 13),
+    legend.text      = element_text(size = 12),
+    panel.grid.minor = element_blank(),
+    axis.title       = element_text(size = 13, face = "bold"),
+    axis.text        = element_text(size = 11),
+    plot.caption     = element_text(size = 10)
+  )
+
+fig3
+
+ggsave(
+  filename = file.path(out_fig, "mode_gaps_scatter.png"),
+  plot     = fig3,
+  width    = 10, height = 10, dpi = 300
+)
+```
+
+------------------------------------------------------------------------
+
+## Save Results
+
+```{r save-results}
+write_csv(mode_gaps_comparison,
+          file.path(out_data, "mode_gaps_comparison.csv"))
+write_csv(final_model_results_bivariate,
+          file.path(out_data, "gss_glm_mode_bivariate_22_24.csv"))
+write_csv(final_model_results_full,
+          file.path(out_data, "gss_glm_mode_with_controls_22_24.csv"))
+```

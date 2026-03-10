@@ -1,0 +1,354 @@
+---
+title: "GSS Forest Plots — All Variables (Appendix)"
+format:
+  html:
+    toc-depth: 2
+editor: visual
+---
+
+## Overview
+
+Regenerates all forest plots from `outputs/data/forest_plot_data.csv` (produced by `05_persistence.qmd`):
+
+-   **All-variables forest plot** — 137 variables across 8 domains with 84% confidence intervals by group.
+-   **Per-domain forest plots** — Separate plot for each thematic domain.
+-   **Racial attitudes domain plot** — Focused visualization of race/ethnicity-related items.
+
+Use this file to edit plot aesthetics without re-running the survey design or confidence interval pipeline.
+
+---
+
+## Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00_setup.R")
+library(forcats)
+
+# ── Plot-specific aesthetics ───────────────────────────────────────────────────
+# group_levels and color_mapping must match MODE_COLORS from 00_setup.R for consistency.
+
+group_levels <- c(
+  "2016-2018 (all)",
+  "2022-2024 (all)",
+  "2022-2024 (f2fp)",
+  "2022-2024 (web)"
+)
+
+color_mapping <- c(
+  "2016-2018 (all)"  = MODE_COLORS["2016-2018"],
+  "2022-2024 (all)"  = MODE_COLORS["Population"],
+  "2022-2024 (f2fp)" = MODE_COLORS["f2fp"],
+  "2022-2024 (web)"  = MODE_COLORS["web"]
+)
+
+legend_order <- c(
+  "2016-2018 (all)", "2022-2024 (all)",
+  "2022-2024 (f2fp)", "2022-2024 (web)"
+)
+
+domain_order <- c(
+  "Religion",
+  "Race & Inequality",
+  "Civil Liberties & Government",
+  "Crime, Punishment & Firearms",
+  "Political & Economic Orientations",
+  "Social Attitudes & Morality",
+  "Institutional Confidence",
+  "Well-being & Life Orientations"
+)
+
+# ── Output directories ─────────────────────────────────────────────────────────
+out_fig <- "outputs/figures"
+out_data <- "outputs/data"
+dir.create(file.path(out_fig, "by_domain"), recursive = TRUE, showWarnings = FALSE)
+```
+
+---
+
+## Load Data
+
+```{r load-data, message=FALSE, warning=FALSE}
+forest_data_path <- file.path(out_data, "forest_plot_data.csv")
+if (!file.exists(forest_data_path)) {
+  stop("forest_plot_data.csv not found. Run 05_persistence.qmd first.")
+}
+
+plot_data_all <- read_csv(forest_data_path, show_col_types = FALSE) %>%
+  mutate(
+    domain     = factor(domain,     levels = c(domain_order, "Other / Uncategorized")),
+    mode_group = factor(mode_group, levels = group_levels),
+    variable   = fct_rev(factor(variable))
+  )
+```
+
+---
+
+## Helper: Plot Theme
+
+```{r theme-helper}
+# Centralised theme so tweaks propagate to all plots
+forest_theme <- function(base_size = 11) {
+  theme_bw(base_size = base_size) +
+    theme(
+      plot.title        = element_text(hjust = 0.5, face = "bold", size = base_size + 3),
+      plot.subtitle     = element_text(hjust = 0.5, size = base_size),
+      legend.position   = "bottom",
+      legend.text       = element_text(size = base_size - 2),
+      legend.title      = element_text(face = "bold"),
+      strip.placement   = "outside",
+      strip.background  = element_blank(),
+      strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
+      panel.grid.minor  = element_blank()
+    )
+}
+```
+
+---
+
+## Violin Plot: Distance from Baseline
+
+```{r load-closeness, message=FALSE, warning=FALSE}
+closeness_path <- file.path(out_data, "closeness_by_variable.csv")
+if (!file.exists(closeness_path)) {
+  stop("closeness_by_variable.csv not found. Run 05_persistence.qmd first.")
+}
+
+closeness_results <- read_csv(closeness_path, show_col_types = FALSE)
+```
+
+```{r distance-plots, fig.width=12, fig.height=7}
+closeness_long <- closeness_results %>%
+  filter(!is.na(dist_to_f2fp) & !is.na(dist_to_web) & !is.na(dist_to_all)) %>%
+  pivot_longer(
+    cols      = c(dist_to_f2fp, dist_to_all, dist_to_web),
+    names_to  = "mode",
+    values_to = "distance"
+  ) %>%
+  mutate(
+    mode_label = case_when(
+      mode == "dist_to_f2fp" ~ "FTF/Phone",
+      mode == "dist_to_all"  ~ "Full Sample\n(native weights)",
+      mode == "dist_to_web"  ~ "Web"
+    ),
+    mode_label = factor(mode_label,
+                        levels = c("FTF/Phone", "Full Sample\n(native weights)", "Web"))
+  )
+
+distance_stats <- closeness_long %>%
+  group_by(mode_label) %>%
+  summarise(
+    median = median(distance, na.rm = TRUE),
+    mean   = mean(distance, na.rm = TRUE),
+    n      = n(),
+    .groups = "drop"
+  )
+
+violin_fills <- c(
+  "FTF/Phone"                      = "#D95F02",
+  "Full Sample\n(native weights)"  = "#888888",
+  "Web"                            = "#1B9E77"
+)
+
+# Identify upper outliers (beyond 1.5 * IQR) per mode group
+outlier_data <- closeness_long %>%
+  group_by(mode_label) %>%
+  mutate(
+    q1         = quantile(distance, 0.25, na.rm = TRUE),
+    q3         = quantile(distance, 0.75, na.rm = TRUE),
+    iqr        = q3 - q1,
+    is_outlier = distance > (q3 + 1.5 * iqr)
+  ) %>%
+  filter(is_outlier) %>%
+  mutate(
+    var_label = toupper(gsub("^c_", "", variable)),
+    hjust_val = if_else(mode_label == "FTF/Phone", 1.15, -0.15),
+    nudge_x   = if_else(mode_label == "FTF/Phone", -0.07, 0.07)
+  ) %>%
+  ungroup()
+
+violin_plot <- ggplot(closeness_long,
+                      aes(x = mode_label, y = distance, fill = mode_label)) +
+  geom_violin(alpha = 0.55, trim = TRUE) +
+  geom_boxplot(width = 0.15, alpha = 0.85, outlier.shape = NA, color = "gray20") +
+  geom_point(data = outlier_data,
+             aes(x = mode_label, y = distance, color = mode_label),
+             size = 2.5, inherit.aes = FALSE) +
+  geom_text(data = outlier_data,
+            aes(x     = as.numeric(mode_label) + nudge_x,
+                y     = distance,
+                label = var_label,
+                hjust = hjust_val),
+            size = 4, color = "gray25", inherit.aes = FALSE) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 4,
+               fill = "white", color = "black") +
+  scale_fill_manual(values  = violin_fills, name = NULL) +
+  scale_color_manual(values = violin_fills, guide = "none") +
+  # Embed Md/M stats directly in x-axis tick labels
+  scale_x_discrete(
+    labels = setNames(
+      sprintf("%s\nMd = %.3f  M = %.3f",
+              c("FTF/Phone", "Full Sample\n(native weights)", "Web"),
+              distance_stats$median,
+              distance_stats$mean),
+      levels(closeness_long$mode_label)
+    )
+  ) +
+  scale_y_continuous(
+    labels = scales::number_format(accuracy = 0.01),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.08))
+  ) +
+  labs(
+    title    = "Distribution of Distance from 2016\u20132018 Baseline",
+    subtitle = "Absolute difference |p_baseline \u2212 p_mode| across all variables",
+    x        = NULL,
+    y        = "Distance from Baseline (Absolute Difference in Proportion)",
+    caption  = "Violin trimmed at zero. Box: median, IQR, 1.5\u00d7IQR whiskers. White diamond: mean. Labeled points are upper outliers."
+  ) +
+  theme_minimal(base_size = 16) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 20),
+    plot.subtitle      = element_text(size = 16),
+    plot.caption       = element_text(size = 13),
+    legend.position    = "none",
+    panel.grid.major.x = element_blank(),
+    axis.text.x        = element_text(size = 15, face = "bold", lineheight = 1.4),
+    axis.text.y        = element_text(size = 14),
+    axis.title.y       = element_text(size = 15),
+    plot.margin        = margin(t = 10, r = 60, b = 10, l = 10)
+  )
+
+violin_plot
+
+ggsave(
+  file.path(out_fig, "violin_baseline_distance.png"),
+  plot = violin_plot, width = 12, height = 7, dpi = 300
+)
+```
+
+---
+
+## All-Variables Forest Plot (Appendix)
+
+```{r forest-all, fig.width=12, fig.height=20}
+forest_all <- ggplot(plot_data_all,
+                     aes(x = estimate, y = variable, color = mode_group)) +
+  geom_point(position = position_dodge(width = 0.7), size = 2) +
+  geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
+                 position = position_dodge(width = 0.7),
+                 height = 0, linewidth = 0.7) +
+  facet_grid(domain ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  scale_color_manual(values = color_mapping, breaks = legend_order, name = "Group") +
+  guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+  labs(
+    title    = "84% Confidence Intervals by Domain and Group",
+    subtitle = "GSS 2016–18 baseline vs. 2022–24, by mode",
+    x        = "Estimated Proportion",
+    y        = NULL
+  ) +
+  coord_cartesian(xlim = c(0, 1)) +
+  forest_theme()
+
+forest_all
+
+plot_height <- max(8, n_distinct(plot_data_all$variable) * 0.5)
+ggsave(
+  file.path(out_fig, "forest_all_variables.png"),
+  plot = forest_all, width = 12, height = plot_height,
+  units = "in", dpi = 300, limitsize = FALSE
+)
+```
+
+---
+
+## Per-Domain Forest Plots
+
+```{r forest-by-domain, message=FALSE}
+safe_name <- function(x) {
+  tolower(x) %>%
+    str_replace_all("[^a-z0-9]+", "_") %>%
+    str_remove("_$")
+}
+
+plot_domain <- function(domain_name, data) {
+  domain_data <- data %>% filter(as.character(domain) == domain_name)
+  n_vars      <- n_distinct(domain_data$variable)
+
+  p <- ggplot(domain_data,
+              aes(x = estimate, y = variable, color = mode_group)) +
+    geom_point(position = position_dodge(width = 0.7), size = 2.5) +
+    geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
+                   position = position_dodge(width = 0.7),
+                   height = 0, linewidth = 0.8) +
+    scale_color_manual(values = color_mapping, breaks = legend_order, name = "Group") +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(
+      title    = domain_name,
+      subtitle = "84% CIs — GSS 2016–18 baseline vs. 2022–24, by mode",
+      x        = "Estimated Proportion",
+      y        = NULL
+    ) +
+    coord_cartesian(xlim = c(0, 1)) +
+    forest_theme()
+
+  list(plot = p, height = max(4, n_vars * 0.45))
+}
+
+out_fig_domains <- file.path(out_fig, "by_domain")
+domains_present <- levels(droplevels(plot_data_all$domain))
+
+for (dom in domains_present) {
+  result <- plot_domain(dom, plot_data_all)
+  fname  <- paste0("forest_", safe_name(dom), ".png")
+  ggsave(
+    file.path(out_fig_domains, fname),
+    plot = result$plot, width = 10, height = result$height,
+    units = "in", dpi = 300, limitsize = FALSE
+  )
+}
+```
+
+---
+
+## Racial Attitudes Domain
+
+```{r forest-racial, fig.width=12}
+racial_topics <- unique(plot_data_all$domain)[
+  str_detect(tolower(as.character(unique(plot_data_all$domain))), "racial|race")
+]
+
+plot_data_racial <- plot_data_all %>% filter(domain %in% racial_topics)
+
+if (nrow(plot_data_racial) > 0) {
+  forest_racial <- ggplot(plot_data_racial,
+                          aes(x = estimate, y = variable, color = mode_group)) +
+    geom_point(position = position_dodge(width = 0.7), size = 2.5) +
+    geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
+                   position = position_dodge(width = 0.7),
+                   height = 0, linewidth = 0.8) +
+    facet_grid(domain ~ ., scales = "free_y", space = "free_y", switch = "y") +
+    scale_color_manual(values = color_mapping, breaks = legend_order, name = "Group") +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(
+      title    = "84% Confidence Intervals — Racial Attitudes Domain",
+      subtitle = "GSS 2016–18 baseline vs. 2022–24, by mode",
+      x        = "Estimated Proportion",
+      y        = NULL,
+      caption  = paste0(
+        "84% non-overlapping CIs ≈ p < .05 pairwise difference.\n",
+        "FTF/Phone (orange); Web (teal); Full sample (black); Baseline 2016–18 (gray)."
+      )
+    ) +
+    coord_cartesian(xlim = c(0, 1)) +
+    forest_theme()
+
+  forest_racial
+
+  plot_height_racial <- max(6, n_distinct(plot_data_racial$variable) * 0.5)
+  ggsave(
+    file.path(out_fig, "forest_racial_attitudes.png"),
+    plot = forest_racial, width = 12, height = plot_height_racial,
+    units = "in", dpi = 300, limitsize = FALSE
+  )
+}
+```

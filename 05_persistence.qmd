@@ -1,0 +1,721 @@
+---
+title: "GSS Mode Effects: Temporal Persistence Analysis (2016–2024)"
+format:
+  html:
+    toc-depth: 3
+editor: visual
+---
+
+## Overview
+
+This file produces all §4 outputs examining which survey mode better preserves temporal continuity with the pre-multimode GSS baseline (2016–2018):
+
+-   **Forest plots** comparing 2016–2018 baseline estimates to 2022–2024 mode-specific estimates with 84% confidence intervals.
+-   **Violin plot** showing distribution of absolute changes across all 137 variables for each mode.
+-   **Per-domain forest plots** facilitating visual inspection of temporal persistence by thematic area.
+
+Four comparison groups are used: 2016–2018 pooled baseline (gray), 2022–2024 full combined sample (black), 2022–2024 FTF/Phone subsample (orange), and 2022–2024 Web subsample (teal).
+
+---
+
+## Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00_setup.R")
+
+# File-specific libraries not covered by 00_setup.R
+library(gt)
+library(forcats)
+
+# Output directories
+out_fig    <- "outputs/figures"
+out_tables <- "outputs/tables"
+out_data   <- "outputs/data"
+for (d in c(out_fig, out_tables, out_data)) {
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+}
+
+# 4-group aesthetics — used throughout
+group_levels <- c(
+  "2016-2018 (all)",
+  "2022-2024 (all)",
+  "2022-2024 (f2fp)",
+  "2022-2024 (web)"
+)
+
+color_mapping <- c(
+  "2016-2018 (all)"  = MODE_COLORS["2016-2018"],
+  "2022-2024 (all)"  = MODE_COLORS["Population"],
+  "2022-2024 (f2fp)" = MODE_COLORS["f2fp"],
+  "2022-2024 (web)"  = MODE_COLORS["web"]
+)
+
+legend_order <- c(
+  "2016-2018 (all)", "2022-2024 (all)",
+  "2022-2024 (f2fp)", "2022-2024 (web)"
+)
+
+domain_order <- c(
+  "Religion",
+  "Race & Inequality",
+  "Civil Liberties & Government",
+  "Crime, Punishment & Firearms",
+  "Political & Economic Orientations",
+  "Social Attitudes & Morality",
+  "Institutional Confidence",
+  "Well-being & Life Orientations"
+)
+```
+
+---
+
+## Data Loading
+
+```{r load-data, message=FALSE, warning=FALSE}
+if (!file.exists(GSS_RDS_PATH))  stop("RDS not found: ", GSS_RDS_PATH)
+if (!file.exists(WEIGHTS_PATH))  stop("Weights not found: ", WEIGHTS_PATH)
+
+gss_data     <- readRDS(GSS_RDS_PATH)
+mode_weights <- read_dta(WEIGHTS_PATH)
+
+# 2022-2024 analysis dataset: join mode-specific weights, drop mode==3
+gss_analysis_data <- gss_data %>%
+  filter(year %in% c(2022, 2024), mode != 3) %>%
+  left_join(mode_weights, by = join_by(id, year)) %>%
+  mutate(
+    wtssps_f2fp = if_else(is.na(wtssps_f2fp), wtssps, wtssps_f2fp),
+    wtssps_web  = if_else(is.na(wtssps_web),  wtssps, wtssps_web)
+  ) %>%
+  filter(!is.na(vpsu), !is.na(vstrat), !is.na(wtssps), !is.na(mode)) %>%
+  mutate(year = as.numeric(as.character(year)))
+
+```
+
+---
+
+## Analytic Core Variables
+
+```{r define-core-vars}
+# Analytic core variable set — defined in 00_setup.R, sourced from
+# data/analytic_core.csv (analytic_core == 1). All 137 items are fielded in
+# 2016, 2018, 2022, and 2024; the CSV is the authoritative record of inclusion.
+c_vars <- intersect(ANALYTIC_CORE_VARS, names(gss_data))
+
+```
+
+---
+
+## Survey Design Objects — 4 Groups
+
+```{r define-designs}
+options(survey.lonely.psu = "adjust")
+
+safe_svydesign <- function(ids, strata, weights, data) {
+  tryCatch(
+    svydesign(ids = ids, strata = strata, weights = weights, data = data, nest = TRUE),
+    error = function(e) { message("Error creating design: ", e$message); NULL }
+  )
+}
+
+# 2016-2018 pooled baseline
+data_1618_pooled   <- gss_data %>%
+  filter(year %in% c(2016, 2018), !is.na(vpsu), !is.na(vstrat), !is.na(wtssps))
+design_1618_pooled <- safe_svydesign(~vpsu, ~vstrat, ~wtssps, data_1618_pooled)
+
+# 2022-2024: all modes combined
+design_all_pooled  <- safe_svydesign(~vpsu, ~vstrat, ~wtssps, gss_analysis_data)
+
+# 2022-2024: FTF/Phone only (mode-specific weight)
+data_f2fp_pooled   <- subset(gss_analysis_data, mode %in% c(1, 2) & !is.na(wtssps_f2fp))
+design_f2fp_pooled <- if (nrow(data_f2fp_pooled) > 0)
+  safe_svydesign(~vpsu, ~vstrat, ~wtssps_f2fp, data_f2fp_pooled) else NULL
+
+# 2022-2024: Web only (mode-specific weight)
+data_web_pooled    <- subset(gss_analysis_data, mode == 4 & !is.na(wtssps_web))
+design_web_pooled  <- if (nrow(data_web_pooled) > 0)
+  safe_svydesign(~vpsu, ~vstrat, ~wtssps_web, data_web_pooled) else NULL
+
+if (is.null(design_all_pooled) || is.null(design_1618_pooled)) {
+  stop("Failed to create main survey design objects. Check data.")
+}
+```
+
+---
+
+## Calculate 84% Confidence Intervals
+
+84% CIs are used because non-overlapping 84% intervals correspond approximately to a significant pairwise difference at *p* < .05 (Payton, Greenstone, & Schenker, 2003).
+
+```{r calc-cis}
+calculate_ci <- function(design_obj, var_formula) {
+  if (is.null(design_obj)) return(list(est = NA, se = NA, lwr = NA, upr = NA))
+  mean_obj <- tryCatch(svymean(var_formula, design_obj, na.rm = TRUE),
+                       error = function(e) NA)
+  if (any(is.na(mean_obj)) || !inherits(mean_obj, "svystat"))
+    return(list(est = NA, se = NA, lwr = NA, upr = NA))
+  est <- tryCatch(as.numeric(coef(mean_obj)[1]), error = function(e) NA)
+  se  <- tryCatch(as.numeric(SE(mean_obj)[1]),   error = function(e) NA)
+  if (is.na(est) || is.na(se) || se == 0)
+    return(list(est = NA, se = NA, lwr = NA, upr = NA))
+  ci_obj <- tryCatch(confint(mean_obj, level = 0.84), error = function(e) NA)
+  if (any(is.na(ci_obj)) || !is.matrix(ci_obj) || nrow(ci_obj) != 1 || ncol(ci_obj) != 2) {
+    ci_lwr <- NA; ci_upr <- NA
+  } else {
+    ci_lwr <- ci_obj[1, 1]; ci_upr <- ci_obj[1, 2]
+  }
+  list(
+    est = est, se = se,
+    lwr = ifelse(is.na(ci_lwr), NA, max(0, ci_lwr)),
+    upr = ifelse(is.na(ci_upr), NA, min(1, ci_upr))
+  )
+}
+
+design_list <- list(
+  "2016-2018 (all)"  = list(d = design_1618_pooled, data = data_1618_pooled),
+  "2022-2024 (all)"  = list(d = design_all_pooled,  data = gss_analysis_data),
+  "2022-2024 (f2fp)" = list(d = design_f2fp_pooled, data = data_f2fp_pooled),
+  "2022-2024 (web)"  = list(d = design_web_pooled,  data = data_web_pooled)
+)
+
+ci_results_pooled <- data.frame(
+  variable   = character(),
+  mode_group = character(),
+  estimate   = numeric(),
+  se         = numeric(),
+  ci_lower   = numeric(),
+  ci_upper   = numeric(),
+  stringsAsFactors = FALSE
+)
+
+
+for (var in c_vars) {
+  str_formula <- as.formula(paste0("~", var))
+  row_offset  <- nrow(ci_results_pooled)
+  for (group_name in names(design_list)) {
+    d_info <- design_list[[group_name]]
+    if (!is.null(d_info$data) && var %in% names(d_info$data)) {
+      res <- calculate_ci(d_info$d, str_formula)
+      ci_results_pooled[row_offset + 1, ] <-
+        list(var, group_name, res$est, res$se, res$lwr, res$upr)
+    } else {
+      ci_results_pooled[row_offset + 1, ] <- list(var, group_name, NA, NA, NA, NA)
+    }
+    row_offset <- row_offset + 1
+  }
+}
+
+```
+
+---
+
+## Topic Mapping and Domain Consolidation
+
+```{r topic-mapping}
+# Read domain and topic assignments directly from the analytic core registry.
+# The eight final domains and variable-level overrides (e.g., CAPPUN, DISCAFF,
+# LETIN1A) are already incorporated in data/analytic_core.csv.
+topic_mapping <- readr::read_csv("data/analytic_core.csv", show_col_types = FALSE) |>
+  dplyr::filter(analytic_core == 1) |>
+  dplyr::transmute(
+    varname  = variable,
+    variable = paste0("c_", tolower(variable)),
+    topic    = source_topic,
+    domain   = factor(domain, levels = domain_order)
+  )
+
+# Variable-domain lookup saved for reference
+domain_var_table <- topic_mapping %>%
+  mutate(var_display = toupper(gsub("^c_", "", variable))) %>%
+  arrange(domain, var_display) %>%
+  select(Domain = domain, Variable = var_display, `Source Topic` = topic)
+
+write_csv(domain_var_table, file.path(out_data, "domain_variable_lookup.csv"))
+
+domain_var_table %>%
+  count(Domain, name = "N") %>%
+  gt() %>%
+  tab_header(title = "Variables per domain")
+```
+
+---
+
+## Forest Plot — All Variables (Appendix)
+
+### Full Forest Plot Across All Variables
+
+```{r forest-plot-all, fig.width=12, fig.height=20}
+plot_data_all <- ci_results_pooled %>%
+  filter(!is.na(estimate), !is.na(ci_lower), !is.na(ci_upper)) %>%
+  left_join(topic_mapping, by = "variable") %>%
+  mutate(
+    domain     = replace_na(as.character(domain), "Other / Uncategorized"),
+    domain     = factor(domain, levels = domain_order),
+    mode_group = factor(mode_group, levels = group_levels),
+    variable   = fct_rev(factor(toupper(gsub("^c_", "", variable))))
+  )
+
+if (nrow(plot_data_all) > 0) {
+  forest_all <- ggplot(plot_data_all,
+                       aes(x = estimate, y = variable, color = mode_group)) +
+    geom_point(position = position_dodge(width = 0.7), size = 2) +
+    geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
+                   position = position_dodge(width = 0.7),
+                   height = 0, linewidth = 0.7) +
+    facet_grid(domain ~ ., scales = "free_y", space = "free_y", switch = "y") +
+    scale_color_manual(values = color_mapping, breaks = legend_order, name = "Group") +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(
+      title    = "84% Confidence Intervals by Domain and Group",
+      subtitle = "GSS 2016–18 baseline vs. 2022–24, by mode",
+      x        = "Estimated Proportion",
+      y        = NULL
+    ) +
+    theme_bw() +
+    theme(
+      plot.title        = element_text(hjust = 0.5, face = "bold", size = 14),
+      plot.subtitle     = element_text(hjust = 0.5, size = 11),
+      legend.position   = "bottom",
+      legend.text       = element_text(size = 9),
+      axis.text.y       = element_text(size = 8),
+      strip.placement   = "outside",
+      strip.background  = element_blank(),
+      strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
+      legend.title      = element_text(face = "bold")
+    ) +
+    coord_cartesian(xlim = c(0, 1))
+
+  forest_all
+
+  plot_height <- max(8, n_distinct(plot_data_all$variable) * 0.5)
+  ggsave(
+    file.path(out_fig, "forest_all_variables.png"),
+    plot = forest_all, width = 12, height = plot_height,
+    units = "in", dpi = 300, limitsize = FALSE
+  )
+
+  # --- Per-domain forest plots ---
+  plot_domain <- function(domain_name, data, colors, levels, legend) {
+    domain_data <- data %>% filter(as.character(domain) == domain_name)
+    n_vars      <- n_distinct(domain_data$variable)
+    p <- ggplot(domain_data,
+                aes(x = estimate, y = variable, color = mode_group)) +
+      geom_point(position = position_dodge(width = 0.7), size = 2.5) +
+      geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
+                     position = position_dodge(width = 0.7),
+                     height = 0, linewidth = 0.8) +
+      scale_color_manual(values = colors, breaks = legend, name = "Group") +
+      guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+      labs(
+        title    = domain_name,
+        subtitle = "84% CIs — GSS 2016–18 baseline vs. 2022–24, by mode",
+        x        = "Estimated Proportion",
+        y        = NULL
+      ) +
+      theme_bw() +
+      theme(
+        plot.title      = element_text(hjust = 0.5, face = "bold", size = 13),
+        plot.subtitle   = element_text(hjust = 0.5, size = 10),
+        legend.position = "bottom",
+        legend.text     = element_text(size = 9),
+        axis.text.y     = element_text(size = 9),
+        legend.title    = element_text(face = "bold")
+      ) +
+      coord_cartesian(xlim = c(0, 1))
+    list(plot = p, height = max(4, n_vars * 0.45))
+  }
+
+  safe_name <- function(x) {
+    tolower(x) %>%
+      str_replace_all("[^a-z0-9]+", "_") %>%
+      str_remove("_$")
+  }
+
+  out_fig_domains <- file.path(out_fig, "by_domain")
+  dir.create(out_fig_domains, recursive = TRUE, showWarnings = FALSE)
+
+  domains_present <- levels(droplevels(plot_data_all$domain))
+  for (dom in domains_present) {
+    result <- plot_domain(dom, plot_data_all, color_mapping, group_levels, legend_order)
+    fname  <- paste0("forest_", safe_name(dom), ".png")
+    ggsave(
+      file.path(out_fig_domains, fname),
+      plot = result$plot, width = 10, height = result$height,
+      units = "in", dpi = 300, limitsize = FALSE
+    )
+  }
+}
+```
+
+```{r save-plot-data}
+# Save plot_data_all to CSV so appendix_forest_plots.qmd can reproduce all
+# forest plots without re-running the survey design and CI calculation pipeline.
+write_csv(
+  plot_data_all %>%
+    mutate(
+      variable   = as.character(variable),
+      domain     = as.character(domain),
+      mode_group = as.character(mode_group)
+    ),
+  file.path(out_data, "forest_plot_data.csv")
+)
+```
+
+---
+
+## Forest Plot — Racial Attitudes Domain
+
+### Racial Attitudes Domain Forest Plot
+
+```{r forest-plot-racial, fig.width=12, fig.height=10}
+racial_topics <- unique(plot_data_all$domain)[
+  str_detect(tolower(as.character(unique(plot_data_all$domain))), "racial|race")
+]
+
+plot_data_racial <- plot_data_all %>%
+  filter(domain %in% racial_topics)
+
+if (nrow(plot_data_racial) > 0) {
+  forest_racial <- ggplot(plot_data_racial,
+                          aes(x = estimate, y = variable, color = mode_group)) +
+    geom_point(position = position_dodge(width = 0.7), size = 2.5) +
+    geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
+                   position = position_dodge(width = 0.7),
+                   height = 0, linewidth = 0.8) +
+    facet_grid(domain ~ ., scales = "free_y", space = "free_y", switch = "y") +
+    scale_color_manual(values = color_mapping, breaks = legend_order, name = "Group") +
+    guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
+    labs(
+      title    = "84% Confidence Intervals — Racial Attitudes Domain",
+      subtitle = "GSS 2016–18 baseline vs. 2022–24, by mode",
+      x        = "Estimated Proportion",
+      y        = NULL,
+      caption  = paste0(
+        "84% non-overlapping CIs correspond approximately to p < .05 pairwise difference.\n",
+        "FTF/Phone (orange); Web (teal); Full sample (black); Baseline 2016–18 (gray)."
+      )
+    ) +
+    theme_bw() +
+    theme(
+      plot.title        = element_text(hjust = 0.5, face = "bold", size = 14),
+      plot.subtitle     = element_text(hjust = 0.5, size = 11),
+      legend.position   = "bottom",
+      legend.text       = element_text(size = 9),
+      axis.text.y       = element_text(size = 9),
+      strip.placement   = "outside",
+      strip.background  = element_blank(),
+      strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
+      legend.title      = element_text(face = "bold")
+    ) +
+    coord_cartesian(xlim = c(0, 1))
+
+  forest_racial
+
+  plot_height_racial <- max(6, n_distinct(plot_data_racial$variable) * 0.5)
+  ggsave(
+    file.path(out_fig, "forest_racial_attitudes.png"),
+    plot = forest_racial, width = 12, height = plot_height_racial,
+    units = "in", dpi = 300, limitsize = FALSE
+  )
+} else {
+  warning("No variables matched racial attitudes filter. Check domain labels above.")
+}
+```
+
+---
+
+## Closeness Analysis
+
+```{r closeness-analysis}
+closeness_results <- ci_results_pooled %>%
+  select(variable, mode_group, estimate) %>%
+  filter(!is.na(estimate)) %>%
+  pivot_wider(names_from = mode_group, values_from = estimate) %>%
+  select(
+    variable,
+    est_1618 = `2016-2018 (all)`,
+    est_all  = `2022-2024 (all)`,
+    est_f2fp = `2022-2024 (f2fp)`,
+    est_web  = `2022-2024 (web)`
+  ) %>%
+  mutate(
+    dist_to_f2fp = abs(est_1618 - est_f2fp),
+    dist_to_web  = abs(est_1618 - est_web),
+    dist_to_all  = abs(est_1618 - est_all),
+    closer_to    = case_when(
+      dist_to_f2fp < dist_to_web  ~ "f2fp",
+      dist_to_web  < dist_to_f2fp ~ "web",
+      dist_to_web == dist_to_f2fp ~ "tie",
+      TRUE                        ~ NA_character_
+    ),
+    # Is FTF closer to baseline than the full combined sample?
+    ftf_beats_full = dist_to_f2fp < dist_to_all
+  )
+
+n_total          <- nrow(closeness_results)
+n_ftf_beats_web  <- sum(closeness_results$closer_to == "f2fp", na.rm = TRUE)
+n_web_beats_ftf  <- sum(closeness_results$closer_to == "web",  na.rm = TRUE)
+n_ftf_beats_full <- sum(closeness_results$ftf_beats_full,      na.rm = TRUE)
+n_web_beats_full <- sum(closeness_results$dist_to_web < closeness_results$dist_to_all, na.rm = TRUE)
+
+summary_table <- tibble(
+  Mode            = c("FTF/Phone", "Web", "Full Sample"),
+  `N closer to baseline (vs other mode)` = c(
+    paste0(n_ftf_beats_web,  " (", round(n_ftf_beats_web  / n_total * 100, 1), "%)"),
+    paste0(n_web_beats_ftf,  " (", round(n_web_beats_ftf  / n_total * 100, 1), "%)"),
+    "—"
+  ),
+  `N closer to baseline (vs full sample)` = c(
+    paste0(n_ftf_beats_full, " (", round(n_ftf_beats_full / n_total * 100, 1), "%)"),
+    paste0(n_web_beats_full, " (", round(n_web_beats_full / n_total * 100, 1), "%)"),
+    "reference"
+  ),
+  `Mean |distance|` = c(
+    round(mean(closeness_results$dist_to_f2fp, na.rm = TRUE), 3),
+    round(mean(closeness_results$dist_to_web,  na.rm = TRUE), 3),
+    round(mean(closeness_results$dist_to_all,  na.rm = TRUE), 3)
+  ),
+  `Median |distance|` = c(
+    round(median(closeness_results$dist_to_f2fp, na.rm = TRUE), 3),
+    round(median(closeness_results$dist_to_web,  na.rm = TRUE), 3),
+    round(median(closeness_results$dist_to_all,  na.rm = TRUE), 3)
+  ),
+  `Max |distance|` = c(
+    round(max(closeness_results$dist_to_f2fp, na.rm = TRUE), 3),
+    round(max(closeness_results$dist_to_web,  na.rm = TRUE), 3),
+    round(max(closeness_results$dist_to_all,  na.rm = TRUE), 3)
+  )
+)
+
+summary_table %>%
+  gt() %>%
+  tab_header(
+    title    = "Baseline proximity summary",
+    subtitle = paste0(
+      "Distance from 2016–2018 estimates across ", n_total, " variables. ",
+      "'Closer to baseline (vs other mode)' = FTF vs Web head-to-head. ",
+      "'Closer to baseline (vs full sample)' = mode-specific vs pooled 2022–2024 estimate."
+    )
+  )
+
+write_csv(closeness_results, file.path(out_data, "closeness_by_variable.csv"))
+```
+
+---
+
+## Distance Distribution Plots
+
+### Violin Plot of Baseline Distance Distributions
+
+```{r distance-plots, fig.width=12, fig.height=7}
+# Pivot to long including full sample
+closeness_long <- closeness_results %>%
+  filter(!is.na(dist_to_f2fp), !is.na(dist_to_web), !is.na(dist_to_all)) %>%
+  pivot_longer(
+    cols      = c(dist_to_f2fp, dist_to_web, dist_to_all),
+    names_to  = "mode",
+    values_to = "distance"
+  ) %>%
+  mutate(
+    mode_label = case_when(
+      mode == "dist_to_f2fp" ~ "FTF/Phone",
+      mode == "dist_to_web"  ~ "Web",
+      mode == "dist_to_all"  ~ "Full Sample"
+    ),
+    mode_label = factor(mode_label, levels = c("FTF/Phone", "Full Sample", "Web"))
+  )
+
+distance_stats <- closeness_long %>%
+  group_by(mode_label) %>%
+  summarise(
+    median = median(distance, na.rm = TRUE),
+    mean   = mean(distance, na.rm = TRUE),
+    n      = n(),
+    .groups = "drop"
+  ) %>%
+  arrange(mode_label)
+
+# Identify outliers (beyond 1.5 * IQR) per mode group
+outlier_data <- closeness_long %>%
+  group_by(mode_label) %>%
+  mutate(
+    q1         = quantile(distance, 0.25, na.rm = TRUE),
+    q3         = quantile(distance, 0.75, na.rm = TRUE),
+    iqr        = q3 - q1,
+    is_outlier = distance > (q3 + 1.5 * iqr)   # only upper outliers (distance >= 0)
+  ) %>%
+  filter(is_outlier) %>%
+  mutate(var_label = toupper(gsub("^c_", "", variable))) %>%
+  ungroup()
+
+# x-axis nudge direction: FTF labels left, Full Sample right, Web right
+outlier_data <- outlier_data %>%
+  mutate(
+    hjust_val = if_else(mode_label == "FTF/Phone", 1.15, -0.15),
+    nudge_x   = if_else(mode_label == "FTF/Phone", -0.05, 0.05)
+  )
+
+mode_colors <- c("FTF/Phone" = "#D95F02", "Full Sample" = "#666666", "Web" = "#1B9E77")
+
+violin_plot <- ggplot(closeness_long,
+                      aes(x = mode_label, y = distance, fill = mode_label)) +
+  geom_violin(alpha = 0.55, trim = TRUE) +
+  geom_boxplot(width = 0.15, alpha = 0.85, outlier.shape = NA,
+               color = "gray20") +
+  # Outlier dots
+  geom_point(data = outlier_data,
+             aes(x = mode_label, y = distance, color = mode_label),
+             size = 2, inherit.aes = FALSE) +
+  # Outlier labels — offset horizontally away from violin
+  geom_text(data = outlier_data,
+            aes(x    = as.numeric(mode_label) + nudge_x,
+                y    = distance,
+                label = var_label,
+                hjust = hjust_val),
+            size = 2.5, color = "gray25", inherit.aes = FALSE) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 3,
+               fill = "white", color = "black") +
+  scale_fill_manual(values  = mode_colors, name = NULL) +
+  scale_color_manual(values = mode_colors, guide = "none") +
+  scale_y_continuous(
+    labels = scales::number_format(accuracy = 0.01),
+    limits = c(0, NA),
+    expand = expansion(mult = c(0, 0.08))
+  ) +
+  # Stats annotation below each violin
+  geom_text(
+    data = distance_stats,
+    aes(x = mode_label,
+        y = -Inf,
+        label = sprintf("Median: %.3f\nMean: %.3f", median, mean)),
+    vjust = -0.3, size = 3, color = "gray30", inherit.aes = FALSE
+  ) +
+  labs(
+    title   = "Distribution of Distance from 2016\u20132018 Baseline",
+    subtitle = "Absolute difference |p_baseline \u2212 p_mode| across all variables",
+    x       = NULL,
+    y       = "Distance from Baseline (Absolute Difference in Proportion)",
+    caption = "Violin trimmed at zero. Box: median, IQR, 1.5\u00d7IQR whiskers. White diamond: mean. Labeled points are upper outliers."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 13),
+    plot.subtitle      = element_text(size = 11),
+    legend.position    = "none",
+    panel.grid.major.x = element_blank(),
+    axis.text.x        = element_text(size = 12, face = "bold"),
+    plot.margin        = margin(t = 10, r = 40, b = 30, l = 10)
+  )
+
+violin_plot
+
+ggsave(
+  file.path(out_fig, "violin_baseline_distance.png"),
+  plot = violin_plot, width = 12, height = 7, dpi = 300
+)
+```
+
+---
+
+## Domain-Level Distance Aggregation
+
+### Domain-Level Percentage of FTF/Phone Closer to Baseline
+
+```{r domain-aggregation}
+closeness_with_topics <- closeness_results %>%
+  left_join(topic_mapping, by = "variable") %>%
+  mutate(domain = replace_na(as.character(domain), "Other / Uncategorized"))
+
+domain_summary <- closeness_with_topics %>%
+  filter(!is.na(dist_to_f2fp), !is.na(dist_to_web)) %>%
+  group_by(Domain = domain) %>%
+  summarise(
+    N               = n(),
+    Mean_Dist_FTF   = round(mean(dist_to_f2fp,  na.rm = TRUE), 3),
+    Median_Dist_FTF = round(median(dist_to_f2fp, na.rm = TRUE), 3),
+    Mean_Dist_Web   = round(mean(dist_to_web,    na.rm = TRUE), 3),
+    Median_Dist_Web = round(median(dist_to_web,  na.rm = TRUE), 3),
+    Mean_Dist_Full  = round(mean(dist_to_all,    na.rm = TRUE), 3),
+    Median_Dist_Full= round(median(dist_to_all,  na.rm = TRUE), 3),
+    Pct_FTF_Closer  = round(mean(closer_to == "f2fp", na.rm = TRUE) * 100, 1),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(Pct_FTF_Closer))
+
+gt_domain <- domain_summary %>%
+  gt() %>%
+  tab_header(
+    title    = "Domain-Level Distance from 2016\u20132018 Baseline",
+    subtitle = "Mean and median absolute differences by survey mode, pooled 2022\u20132024"
+  ) %>%
+  cols_label(
+    Domain           = "Domain",
+    N                = "N vars",
+    Mean_Dist_FTF    = "Mean",
+    Median_Dist_FTF  = "Median",
+    Mean_Dist_Web    = "Mean",
+    Median_Dist_Web  = "Median",
+    Mean_Dist_Full   = "Mean",
+    Median_Dist_Full = "Median",
+    Pct_FTF_Closer   = "% FTF Closer"
+  ) %>%
+  tab_spanner(label = "FTF/Phone Distance", columns = c(Mean_Dist_FTF, Median_Dist_FTF)) %>%
+  tab_spanner(label = "Web Distance",       columns = c(Mean_Dist_Web, Median_Dist_Web)) %>%
+  tab_spanner(label = "Full Sample Distance", columns = c(Mean_Dist_Full, Median_Dist_Full)) %>%
+  fmt_number(
+    columns  = c(Mean_Dist_FTF, Median_Dist_FTF, Mean_Dist_Web,
+                 Median_Dist_Web, Mean_Dist_Full, Median_Dist_Full),
+    decimals = 3
+  ) %>%
+  fmt_number(columns = Pct_FTF_Closer, decimals = 1) %>%
+  tab_source_note(
+    "Distance = |p_baseline \u2212 p_mode|. Baseline = pooled 2016\u20132018 FTF sample under WTSSPS."
+  ) %>%
+  tab_style(
+    style     = cell_text(weight = "bold"),
+    locations = cells_column_spanners()
+  ) %>%
+  tab_options(table.font.size = 11)
+
+gt_domain
+
+gtsave(
+  gt_domain,
+  filename = file.path(out_tables, "domain_distances.png"),
+  expand   = 10
+)
+```
+
+---
+
+## Save Exemplar Data
+
+```{r save-exemplar-data}
+# Exemplar classification — saved to CSV for §4 prose verification; no table rendered
+exemplar_data_summary <- closeness_results %>%
+  left_join(topic_mapping, by = "variable") %>%
+  mutate(
+    classification = case_when(
+      dist_to_f2fp < dist_to_web & dist_to_f2fp < 0.05 ~ "FTF-Preserves",
+      dist_to_web  < dist_to_f2fp & dist_to_web  < 0.05 ~ "Web-Preserves",
+      abs(dist_to_f2fp - dist_to_web) < 0.02             ~ "Convergent",
+      TRUE                                                ~ "Divergent"
+    ),
+    var_display = gsub("^c_", "", variable) %>% toupper()
+  ) %>%
+  select(
+    Variable       = var_display,
+    Domain         = domain,
+    Baseline_1618  = est_1618,
+    Full_2224      = est_all,
+    FTF_2224       = est_f2fp,
+    FTF_Distance   = dist_to_f2fp,
+    Web_2224       = est_web,
+    Web_Distance   = dist_to_web,
+    Full_Distance  = dist_to_all,
+    FTF_Beats_Full = ftf_beats_full,
+    Classification = classification
+  ) %>%
+  arrange(Classification, Domain, Variable)
+
+write_csv(exemplar_data_summary, file.path(out_data, "exemplar_variables.csv"))
+```

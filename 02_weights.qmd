@@ -1,0 +1,298 @@
+---
+title: "GSS Mode Reweighting (2022–2024)"
+editor: visual
+---
+
+## Overview
+
+Computes mode-specific post-stratification weights for the 2022 and 2024 GSS using iterative proportional fitting (raking):
+
+-   **FTF/Phone weight** (`wtssps_f2fp`): Rakes the FTF/Phone subsample to full-sample population margins.
+-   **Web weight** (`wtssps_web`): Rakes the Web subsample to full-sample population margins.
+
+Hot-deck imputation handles missing values before raking to prevent case loss. Output is written to `data/gss20222024_modeweights.dta`.
+
+---
+
+## Setup
+
+### Load libraries used
+
+```{r setup, message=FALSE, warning=FALSE}
+source("00_setup.R")
+
+library(gt)
+
+out_tables <- "outputs/tables"
+dir.create(out_tables, recursive = TRUE, showWarnings = FALSE)
+```
+
+### Load Data
+
+We load the data here **once** to serve both the diagnostics and the reweighting steps.
+
+```{r load-data}
+
+# Load GSS data once
+if (!file.exists(GSS_DTA_PATH)) stop("GSS data file not found: ", GSS_DTA_PATH)
+gss_full <- read_dta(GSS_DTA_PATH)
+
+# Create year-specific subsets for reweighting
+df2022 <- gss_full %>% filter(year == 2022)
+df2024 <- gss_full %>% filter(year == 2024)
+
+# Create a combined dataset specifically for diagnostics
+gss_combined_diag <- bind_rows(df2022, df2024)
+```
+
+## Reweighting function
+
+```{r define-functions}
+## REWEIGHTING FUNCTION ----
+# Rakes a mode subsample of the GSS to the full-sample (wtssps-weighted) population
+# margins. Takes two arguments:
+#   `df`               — full year-specific GSS data frame (e.g., df2022)
+#   `subset_parameter` — string expression selecting the mode subsample (e.g., "mode %in% c(1, 2)")
+# Returns the subsetted data frame with two added weight columns:
+#   `raked_weight`    — raw raking weight
+#   `rescaled_weight` — raked_weight rescaled so the mean equals 1
+
+reweight <- function(df, subset_parameter) {
+  # 7 variables used for raking
+  # REVISED (HISP/RACE): Replaced w_hispanic and w_race with w_hisp_race
+  vars <- c("w_married", "w_born", "w_male", "w_degree", "w_agegroup", "w_region", "w_hisp_race")
+
+  # clean up data and create the 8 variables for weighting
+  df_clean <- df %>%
+    filter(
+      sample != 4,
+      sample != 5,
+      sample != 7,
+      !is.na(wtssps)  # excludes the supplemental oversample collected using NORC's AmeriSpeak platform
+    ) %>%
+    mutate(
+      w_married = case_when(
+        marital == 1 ~ 1,
+        marital %in% c(2:5) ~ 0,
+      ),
+      w_born = case_when(
+        born == 1 ~ 1,
+        born == 2 ~ 0
+      ),
+      w_male = case_when(
+        sex == 1 ~ 1,
+        sex == 2 ~ 0
+      ),
+      # REVISED (HISP/RACE): Removed w_race
+      # REVISED (HISP/RACE): Added w_hisp_race to match the 8 categories from the 2024 codebook
+      # This uses 'hispanic' (1=No, 2-5=Yes) and 'racecen1'/'racecen2'
+      w_hisp_race = case_when(
+        hispanic %in% c(2:5) ~ 1, # Category 1: Hispanic
+        hispanic == 1 & racecen1 == 1 & is.na(racecen2) ~ 2, # Category 2: Non-Hispanic, White Alone
+        hispanic == 1 & racecen1 == 2 & is.na(racecen2) ~ 3, # Category 3: Non-Hispanic, Black Alone
+        hispanic == 1 & racecen1 == 3 & is.na(racecen2) ~ 4, # Category 4: Non-Hispanic, AI/AN Alone
+        hispanic == 1 & racecen1 == 4 & is.na(racecen2) ~ 5, # Category 5: Non-Hispanic, Asian Alone
+        hispanic == 1 & racecen1 == 5 & is.na(racecen2) ~ 6, # Category 6: Non-Hispanic, NH/PI Alone
+        hispanic == 1 & racecen1 == 6 & is.na(racecen2) ~ 7, # Category 7: Non-Hispanic, Other Single Race
+        hispanic == 1 & !is.na(racecen2) ~ 8,              # Category 8: Non-Hispanic, Multiple Races
+      ),
+      w_degree = case_when(
+        degree == 0 ~ 1,
+        degree %in% c(1:2) ~ 2,
+        degree %in% c(3:4) ~ 3,
+      ),
+      # REVISED (AGEGROUP): Matched bins to codebook excerpt
+      w_agegroup = case_when(
+        age %in% c(18:29) ~ 1,
+        age %in% c(30:39) ~ 2,
+        age %in% c(40:49) ~ 3,
+        age %in% c(50:64) ~ 4,
+        age %in% c(65:89) ~ 5, # Corrected max age to 89 per codebook
+      ),
+      w_region = region
+    )
+
+
+  ## HOT DECK IMPUTATION
+  # there are some missingness across the sample for the eight variables used for weighting,
+  # which leads to these observations from being dropped in the re-weighting process,
+  # so hot deck imputation is used to impute the missing values
+  # REVISED (HISP/RACE): The 'vars' vector is updated, so this now imputes w_hisp_race
+  df_clean <- hotdeck(df_clean, vars)
+
+  ## PROPORTIONS AFTER WEIGHTING
+  # full sample with original post-stratification GSS weights (WTSSPS)
+  full_design <- svydesign(ids = ~1, data = df_clean, weights = ~wtssps)
+
+  # proportions from the full sample using original post-stratification GSS weights (WTSSPS)
+  full_props <- list(
+    w_married = svytable(~ w_married, full_design),
+    w_born = svytable(~ w_born, full_design),
+    w_male = svytable(~ w_male, full_design),
+    w_degree = svytable(~ w_degree, full_design),
+    w_agegroup = svytable(~ w_agegroup, full_design),
+    w_region = svytable(~ w_region, full_design),
+    w_hisp_race = svytable(~ w_hisp_race, full_design)
+  )
+
+
+  # subset sample (ie f2f/phone sample) with original post-stratification GSS weights (WTSSPS)
+  df_subset <- subset(df_clean, eval(parse(text = subset_parameter)))
+  subset_design <- svydesign(ids = ~1, data = df_subset, weights = ~wtssps)
+
+
+
+  ## REWEIGHTING
+  # reweighting subset sample using the rake() function
+  # based on the proportions of the full sample
+  raked_design <- rake(
+    design = subset_design,
+    # REVISED (HISP/RACE): Updated list of margins
+    sample.margins = list(~w_married, ~w_born, ~w_male, ~w_degree, ~w_agegroup, ~w_region, ~w_hisp_race),
+    population.margins = full_props # using the full sample proportions
+  )
+
+  ## CREATE NEW DATAFRAME
+  # new df with raked_weight and rescaled_weight (which is rescaled so the mean is 1)
+  df_new <- raked_design$variables %>%
+    bind_cols(as.data.frame(weights(raked_design))) %>%
+    rename(raked_weight = `weights(raked_design)`) %>% # new weights
+    mutate(rescaled_weight = raked_weight / mean(raked_weight)) # rescaled weights
+
+
+  return(df_new)
+}
+```
+
+## DIAGNOSTICS: Demographic Balance Check
+
+This section uses the data loaded in Setup to visualize selection bias. We compare the **Target** (Full Sample, Weighted) against the **F2F** and **Web** subsamples, looking at both their **Unweighted** (raw) and **Original Weighted** (`wtssps`) distributions.
+
+```{r diagnostics, message=FALSE, warning=FALSE, fig.height=10, fig.width=10}
+# --- 1. PREP DIAGNOSTIC DATA ---
+# This reuses the 'gss_combined_diag' object from the Setup chunk.
+# We create labeled versions of the variables for easier plotting.
+
+prep_diagnostic_data <- function(df) {
+  # Clean and label
+  df_labeled <- df %>%
+    filter(sample != 4, sample != 5, sample != 7, !is.na(wtssps)) %>%
+    mutate(
+      w_married = case_when(marital == 1 ~ "Married", marital %in% 2:5 ~ "Not Married"),
+      w_born = case_when(born == 1 ~ "Born in US", born == 2 ~ "Born Elsewhere"),
+      w_male = case_when(sex == 1 ~ "Male", sex == 2 ~ "Female"),
+      w_degree = case_when(degree == 0 ~ "LT HS", degree %in% 1:2 ~ "HS/Assoc", degree %in% 3:4 ~ "BA/Grad"),
+      w_agegroup = case_when(
+        age %in% 18:29 ~ "18-29", age %in% 30:39 ~ "30-39", age %in% 40:49 ~ "40-49",
+        age %in% 50:64 ~ "50-64", age >= 65 ~ "65+"
+      ),
+      w_hisp_race = case_when(
+        hispanic %in% c(2:5)                             ~ "Hispanic",
+        hispanic == 1 & racecen1 == 1 & is.na(racecen2) ~ "White (NH)",
+        hispanic == 1 & racecen1 == 2 & is.na(racecen2) ~ "Black (NH)",
+        hispanic == 1 & racecen1 == 3 & is.na(racecen2) ~ "AI/AN",
+        hispanic == 1 & racecen1 == 4 & is.na(racecen2) ~ "Asian",
+        hispanic == 1 & racecen1 == 5 & is.na(racecen2) ~ "NH/PI",
+        hispanic == 1 & racecen1 == 6 & is.na(racecen2) ~ "Other",
+        hispanic == 1 & !is.na(racecen2)                 ~ "Multiple"
+      ),
+      w_region = as.character(region)
+    ) %>%
+    drop_na(w_married, w_born, w_male, w_degree, w_agegroup, w_hisp_race, w_region)
+
+  return(df_labeled)
+}
+
+diag_data <- prep_diagnostic_data(gss_combined_diag)
+
+# --- 2. CALCULATE PROPORTIONS ---
+
+calc_diag_props <- function(data, group_label, weight_col = NULL) {
+  vars <- c("w_married", "w_born", "w_male", "w_degree", "w_agegroup", "w_hisp_race")
+
+  if (is.null(weight_col)) {
+    des <- svydesign(ids = ~1, data = data)
+  } else {
+    des <- svydesign(ids = ~1, data = data, weights = data[[weight_col]])
+  }
+
+  lapply(vars, function(v) {
+    as.data.frame(prop.table(svytable(as.formula(paste0("~", v)), des))) %>%
+      rename(value = 1, prop = Freq) %>%
+      mutate(variable = v, group = group_label)
+  }) %>% bind_rows()
+}
+
+# A. Target: Full Sample (wtssps)
+props_target <- calc_diag_props(diag_data, "1. Target (Full, wtssps)", "wtssps")
+
+# B. F2F: Unweighted
+props_f2f_unw <- calc_diag_props(diag_data %>% filter(mode %in% 1:2), "2. F2F (Unweighted)", NULL)
+
+# C. Web: Unweighted
+props_web_unw <- calc_diag_props(diag_data %>% filter(mode == 4), "3. Web (Unweighted)", NULL)
+
+# D. F2F: Original Weight (wtssps)
+props_f2f_wt <- calc_diag_props(diag_data %>% filter(mode %in% 1:2), "4. F2F (wtssps)", "wtssps")
+
+# E. Web: Original Weight (wtssps)
+props_web_wt <- calc_diag_props(diag_data %>% filter(mode == 4), "5. Web (wtssps)", "wtssps")
+
+# Combine
+all_diag_props <- bind_rows(props_target, props_f2f_unw, props_web_unw, props_f2f_wt, props_web_wt)
+
+# --- 3. OUTPUT TABLE ---
+all_diag_props %>%
+  pivot_wider(names_from = group, values_from = prop) %>%
+  mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
+  gt() %>%
+  tab_header(title = "Demographic Proportions: Target vs. Mode Subsamples")
+
+# --- 4. VISUALIZATION ---
+ggplot(all_diag_props, aes(x = value, y = prop, fill = group)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
+  facet_wrap(~variable, scales = "free", ncol = 2) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set1") +
+  theme_minimal() +
+  labs(
+    title = "Demographic Balance by Mode and Weighting Scheme",
+    y = "Proportion", x = "", fill = "Group"
+  ) +
+  theme(legend.position = "bottom", strip.text = element_text(face = "bold"))
+```
+
+## Compute weights
+
+Note: We use the `df2022` and `df2024` objects created in the Setup chunk.
+
+### Reweight phone only cases
+
+```{r compute-f2f}
+SUBSET_PARAMETER <- "mode %in% c(1, 2)"  # this is for f2f/phone sample of GSS
+reweight_2022_f2fp <- reweight(df2022, SUBSET_PARAMETER) |>
+  rename(wtssps_f2fp = rescaled_weight) |>
+  select(id, year, wtssps_f2fp)
+reweight_2024_f2fp <- reweight(df2024, SUBSET_PARAMETER) |>
+  rename(wtssps_f2fp = rescaled_weight) |>
+  select(id, year, wtssps_f2fp)
+```
+
+### Reweight web only cases
+
+```{r compute-web}
+SUBSET_PARAMETER <- "mode %in% c(4)"  # this is for web sample of GSS
+reweight_2022_web <- reweight(df2022, SUBSET_PARAMETER) |>
+  rename(wtssps_web = rescaled_weight) |>
+  select(id, year, wtssps_web)
+reweight_2024_web <- reweight(df2024, SUBSET_PARAMETER) |>
+  rename(wtssps_web = rescaled_weight) |>
+  select(id, year, wtssps_web)
+```
+
+### Combine into one dataset
+
+```{r save-output}
+combined <- bind_rows(reweight_2022_f2fp, reweight_2022_web, reweight_2024_f2fp, reweight_2024_web)
+write_dta(combined, WEIGHTS_PATH)
+```
