@@ -16,7 +16,7 @@ This file produces all §4 outputs examining which survey mode better preserves 
 
 Four comparison groups are used: 2016–2018 pooled baseline (gray), 2022–2024 full combined sample (black), 2022–2024 FTF/Phone subsample (orange), and 2022–2024 Web subsample (teal).
 
----
+------------------------------------------------------------------------
 
 ## Setup
 
@@ -35,22 +35,22 @@ for (d in c(out_fig, out_tables, out_data)) {
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
 }
 
-# 4-group aesthetics — used throughout
-group_levels <- c(
+# Define all possible groups (will be filtered below based on available designs)
+all_group_levels <- c(
   "2016-2018 (all)",
   "2022-2024 (all)",
   "2022-2024 (f2fp)",
   "2022-2024 (web)"
 )
 
-color_mapping <- c(
-  "2016-2018 (all)"  = MODE_COLORS["2016-2018"],
-  "2022-2024 (all)"  = MODE_COLORS["Population"],
-  "2022-2024 (f2fp)" = MODE_COLORS["f2fp"],
-  "2022-2024 (web)"  = MODE_COLORS["web"]
+all_color_mapping <- c(
+  "2016-2018 (all)"  = unname(MODE_COLORS["2016-2018"]),
+  "2022-2024 (all)"  = unname(MODE_COLORS["Population"]),
+  "2022-2024 (f2fp)" = unname(MODE_COLORS["f2fp"]),
+  "2022-2024 (web)"  = unname(MODE_COLORS["web"])
 )
 
-legend_order <- c(
+all_legend_order <- c(
   "2016-2018 (all)", "2022-2024 (all)",
   "2022-2024 (f2fp)", "2022-2024 (web)"
 )
@@ -67,7 +67,7 @@ domain_order <- c(
 )
 ```
 
----
+------------------------------------------------------------------------
 
 ## Data Loading
 
@@ -91,7 +91,7 @@ gss_analysis_data <- gss_data %>%
 
 ```
 
----
+------------------------------------------------------------------------
 
 ## Analytic Core Variables
 
@@ -103,7 +103,7 @@ c_vars <- intersect(ANALYTIC_CORE_VARS, names(gss_data))
 
 ```
 
----
+------------------------------------------------------------------------
 
 ## Survey Design Objects — 4 Groups
 
@@ -140,11 +140,11 @@ if (is.null(design_all_pooled) || is.null(design_1618_pooled)) {
 }
 ```
 
----
+------------------------------------------------------------------------
 
 ## Calculate 84% Confidence Intervals
 
-84% CIs are used because non-overlapping 84% intervals correspond approximately to a significant pairwise difference at *p* < .05 (Payton, Greenstone, & Schenker, 2003).
+84% CIs are used because non-overlapping 84% intervals correspond approximately to a significant pairwise difference at *p* \< .05 (Payton, Greenstone, & Schenker, 2003).
 
 ```{r calc-cis}
 calculate_ci <- function(design_obj, var_formula) {
@@ -170,12 +170,25 @@ calculate_ci <- function(design_obj, var_formula) {
   )
 }
 
+# Build design list conditionally — only include groups with valid designs
 design_list <- list(
   "2016-2018 (all)"  = list(d = design_1618_pooled, data = data_1618_pooled),
-  "2022-2024 (all)"  = list(d = design_all_pooled,  data = gss_analysis_data),
-  "2022-2024 (f2fp)" = list(d = design_f2fp_pooled, data = data_f2fp_pooled),
-  "2022-2024 (web)"  = list(d = design_web_pooled,  data = data_web_pooled)
+  "2022-2024 (all)"  = list(d = design_all_pooled,  data = gss_analysis_data)
 )
+
+# Add mode-specific designs only if they exist
+if (!is.null(design_f2fp_pooled)) {
+  design_list[["2022-2024 (f2fp)"]] <- list(d = design_f2fp_pooled, data = data_f2fp_pooled)
+}
+if (!is.null(design_web_pooled)) {
+  design_list[["2022-2024 (web)"]] <- list(d = design_web_pooled, data = data_web_pooled)
+}
+
+# Filter aesthetics to only include groups with valid designs
+actual_groups <- names(design_list)
+group_levels  <- all_group_levels[all_group_levels %in% actual_groups]
+color_mapping <- all_color_mapping[names(all_color_mapping) %in% actual_groups]
+legend_order  <- all_legend_order[all_legend_order %in% actual_groups]
 
 ci_results_pooled <- data.frame(
   variable   = character(),
@@ -206,7 +219,7 @@ for (var in c_vars) {
 
 ```
 
----
+------------------------------------------------------------------------
 
 ## Topic Mapping and Domain Consolidation
 
@@ -237,7 +250,7 @@ domain_var_table %>%
   tab_header(title = "Variables per domain")
 ```
 
----
+------------------------------------------------------------------------
 
 ## Forest Plot — All Variables (Appendix)
 
@@ -360,7 +373,7 @@ write_csv(
 )
 ```
 
----
+------------------------------------------------------------------------
 
 ## Forest Plot — Racial Attitudes Domain
 
@@ -421,7 +434,7 @@ if (nrow(plot_data_racial) > 0) {
 }
 ```
 
----
+------------------------------------------------------------------------
 
 ## Closeness Analysis
 
@@ -500,7 +513,7 @@ summary_table %>%
 write_csv(closeness_results, file.path(out_data, "closeness_by_variable.csv"))
 ```
 
----
+------------------------------------------------------------------------
 
 ## Distance Distribution Plots
 
@@ -614,7 +627,7 @@ ggsave(
 )
 ```
 
----
+------------------------------------------------------------------------
 
 ## Domain-Level Distance Aggregation
 
@@ -685,7 +698,7 @@ gtsave(
 )
 ```
 
----
+------------------------------------------------------------------------
 
 ## Save Exemplar Data
 

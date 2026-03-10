@@ -16,7 +16,7 @@ Regenerates all forest plots from `outputs/data/forest_plot_data.csv` (produced 
 
 Use this file to edit plot aesthetics without re-running the survey design or confidence interval pipeline.
 
----
+------------------------------------------------------------------------
 
 ## Setup
 
@@ -35,10 +35,10 @@ group_levels <- c(
 )
 
 color_mapping <- c(
-  "2016-2018 (all)"  = MODE_COLORS["2016-2018"],
-  "2022-2024 (all)"  = MODE_COLORS["Population"],
-  "2022-2024 (f2fp)" = MODE_COLORS["f2fp"],
-  "2022-2024 (web)"  = MODE_COLORS["web"]
+  "2016-2018 (all)"  = unname(MODE_COLORS["2016-2018"]),
+  "2022-2024 (all)"  = unname(MODE_COLORS["Population"]),
+  "2022-2024 (f2fp)" = unname(MODE_COLORS["f2fp"]),
+  "2022-2024 (web)"  = unname(MODE_COLORS["web"])
 )
 
 legend_order <- c(
@@ -63,7 +63,7 @@ out_data <- "outputs/data"
 dir.create(file.path(out_fig, "by_domain"), recursive = TRUE, showWarnings = FALSE)
 ```
 
----
+------------------------------------------------------------------------
 
 ## Load Data
 
@@ -81,7 +81,7 @@ plot_data_all <- read_csv(forest_data_path, show_col_types = FALSE) %>%
   )
 ```
 
----
+------------------------------------------------------------------------
 
 ## Helper: Plot Theme
 
@@ -103,7 +103,7 @@ forest_theme <- function(base_size = 11) {
 }
 ```
 
----
+------------------------------------------------------------------------
 
 ## Violin Plot: Distance from Baseline
 
@@ -226,7 +226,7 @@ ggsave(
 )
 ```
 
----
+------------------------------------------------------------------------
 
 ## All-Variables Forest Plot (Appendix)
 
@@ -259,7 +259,7 @@ ggsave(
 )
 ```
 
----
+------------------------------------------------------------------------
 
 ## Per-Domain Forest Plots
 
@@ -308,7 +308,7 @@ for (dom in domains_present) {
 }
 ```
 
----
+------------------------------------------------------------------------
 
 ## Racial Attitudes Domain
 

@@ -76,16 +76,16 @@ quarto render
 
 This will execute files in the sequence defined in `_quarto.yml`:
 
-| Step | File | Output |
-|------|------|--------|
-| 1 | `01_data_preparation.qmd` | `data/gss_data_16to24_r2.rds` |
-| 2 | `02_weights.qmd` | `data/gss20222024_modeweights.dta` |
-| 3 | `03_composition.qmd` | Sample sizes and demographic composition plots |
-| 4 | `04_mode_gaps.qmd` | Mode gaps regression table and scatter plot |
-| 5 | `05_persistence.qmd` | Forest plots and distance distribution analyses |
-| 6 | `appendix_forest_plots.qmd` | Appendix figures (reads CSVs from step 5) |
+| Step | File | Input | Output |
+|------|------|-------|--------|
+| 1 | `01_data_preparation.qmd` | `gss7224_r2.dta` | `data/gss_data_16to24_r2.rds` |
+| 2 | `02_weights.qmd` | RDS (01) | `data/gss20222024_modeweights.dta` |
+| 3 | `03_composition.qmd` | RDS (01) | Sample sizes and demographic composition plots |
+| 4 | `04_mode_gaps.qmd` | RDS (01), weights (02) | Mode gaps regression table and scatter plot |
+| 5 | `05_persistence.qmd` | RDS (01), weights (02) | Forest plots and distance distribution analyses |
+| 6 | `appendix_forest_plots.qmd` | CSVs (05) | Appendix figures |
 
-All files source `00_setup.R` and depend on outputs from prior steps.
+**Data dependency note**: Only `01_data_preparation.qmd` requires the raw `.dta` file. All downstream files read the RDS output from step 1, making the pipeline efficient and avoiding repeated loading of the large GSS file.
 
 ## Key Methodological Notes
 
