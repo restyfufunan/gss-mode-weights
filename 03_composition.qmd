@@ -121,7 +121,7 @@ ggsave(
 
 ## Unweighted Demographic Composition by Mode
 
-```{r demographic-composition-dotplot, message=FALSE, warning=FALSE, fig.width=10, fig.height=9}
+```{r demographic-composition-dotplot, message=FALSE, warning=FALSE, fig.width=10, fig.height=10}
 # ── A. Population benchmarks ──────────────────────────────────────────────────
 # Derived from wtssps on the full 2022–2024 sample (both modes combined).
 # This mirrors the NORC post-stratification target and serves as the
@@ -208,7 +208,7 @@ fig2 <- ggplot(
                      expand = expansion(mult = c(0.05, 0.1))) +
   labs(
     title    = "Unweighted Demographic Composition by Mode (2022–2024)",
-    subtitle = "FTF/Phone (circle), Web (triangle), Population benchmark from wtssps full sample (diamond)",
+    subtitle = "FTF/Phone (circle), Web (triangle), Population benchmark from wtssps (diamond)",
     x        = "Proportion",
     y        = NULL
   ) +
@@ -225,7 +225,7 @@ fig2
 ggsave(
   filename = file.path(out_fig, "demographic_composition.png"),
   plot     = fig2,
-  width    = 10, height = 9, dpi = 300
+  width    = 10, height = 10, dpi = 300
 )
 ```
 
