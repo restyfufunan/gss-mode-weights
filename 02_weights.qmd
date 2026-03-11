@@ -248,6 +248,11 @@ all_diag_props %>%
   gt() %>%
   tab_header(title = "Demographic Proportions: Target vs. Mode Subsamples")
 
+# --- 3B. EXPORT TABLE TO CSV ---
+all_diag_props %>%
+  pivot_wider(names_from = group, values_from = prop) %>%
+  write_csv("outputs/data/demographic_balance_check.csv")
+
 # --- 4. VISUALIZATION ---
 ggplot(all_diag_props, aes(x = value, y = prop, fill = group)) +
   geom_bar(stat = "identity", position = position_dodge(width = 0.8)) +
