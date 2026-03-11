@@ -246,9 +246,6 @@ gss_data <- gssrecode(gss_data, vars = c("letdie1", "suicide1", "suicide2", "sui
 ### Miscellaneous Items
 
 ```{r misc-recodes}
-gss_data <- gss_data %>%
-  mutate(xmovie = if_else(form == 2 & !is.na(xmoviey), xmoviey, xmovie))
-
 misc_yesno_vars <- c("cappun", "gunlaw", "grass", "postlife", "prayer",
                      "richwork", "fear", "reborn", "xmovie")
 gss_data <- gssrecode(gss_data, vars = misc_yesno_vars, to0 = 2, to1 = 1)

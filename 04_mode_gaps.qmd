@@ -555,7 +555,6 @@ mode_gaps_comparison %>%
   cols_label(significance_pattern = "Significance Pattern", n = "N", pct = "%")
 
 mode_gaps_plot <- mode_gaps_comparison %>%
-  filter(variable != "c_discaffw") %>% 
   mutate(
     plot_x = if_else(estimate_bivariate < 0, -estimate_bivariate, estimate_bivariate),
     plot_y = if_else(estimate_full < 0, -estimate_full,      estimate_full)

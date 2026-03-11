@@ -2,7 +2,7 @@
 
 Replication code for:
 
-> Fufunan, R., Freese, J., & Jin, O. "Mode Effects and Temporal Continuity in the General Social Survey: Mode-Specific Weights for 2022 and 2024." SocArXiv. [link forthcoming]
+> Fufunan, R., Jin, O., & Freese, J. "Mode Effects and Temporal Continuity in the General Social Survey: Mode-Specific Weights for 2022 and 2024." SocArXiv. [link forthcoming]
 
 ## Overview
 
@@ -116,7 +116,7 @@ For **raking** (IPF) in `02_weights.qmd`, numeric codes are used instead of fact
 
 If you use these weights or replication code, please cite the paper above and this repository:
 
-> Fufunan, R., Freese, J., & Jin O. (2026). gss-mode-weights [Software]. GitHub. https://github.com/restyfufunan/gss-mode-weights
+> Fufunan, R., Jin, O., & Freese, J. (2026). gss-mode-weights [Software]. GitHub. https://github.com/restyfufunan/gss-mode-weights
 
 ## License
 
