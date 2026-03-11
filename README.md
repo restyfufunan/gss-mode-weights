@@ -38,7 +38,7 @@ This repository does not include GSS data files, which cannot be redistributed. 
 
 1. Download the **GSS Cumulative Data File (1972–2024), Release 2** from the NORC GSS website:  
    [https://gss.norc.org/get-the-data/stata](https://gss.norc.org/get-the-data/stata)
-2. Place the `.dta` file in the `data/` directory and name it `gss7224_r2.dta`.
+2. Place the `.dta` file in the `data/` directory and name it `gss7224_r3.dta`.
 3. The file path is defined in `00_setup.R` as `GSS_DTA_PATH`.
 
 ## Requirements
@@ -78,7 +78,7 @@ This will execute files in the sequence defined in `_quarto.yml`:
 
 | Step | File | Input | Output |
 |------|------|-------|--------|
-| 1 | `01_data_preparation.qmd` | `gss7224_r2.dta` | `data/gss_data_16to24_r2.rds` |
+| 1 | `01_data_preparation.qmd` | `gss7224_r3.dta` | `data/gss_data_16to24_r3.rds` |
 | 2 | `02_weights.qmd` | RDS (01) | `data/gss20222024_modeweights.dta` |
 | 3 | `03_composition.qmd` | RDS (01) | Sample sizes and demographic composition plots |
 | 4 | `04_mode_gaps.qmd` | RDS (01), weights (02) | Mode gaps regression table and scatter plot |

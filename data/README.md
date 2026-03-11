@@ -21,25 +21,25 @@ Use these weights when analyzing 2022 or 2024 GSS responses separately by mode. 
 
 ## Files You Must Provide
 
-### `gss7224_r2.dta`
-**The raw GSS Cumulative Data File (1972–2024), Release 2 — you must download this yourself.**
+### `gss7224_r3.dta`
+**The raw GSS Cumulative Data File (1972–2024), Release 3 — you must download this yourself.**
 
 GSS data cannot be redistributed. To replicate the analysis:
 
 1. Go to [https://gss.norc.org/get-the-data/stata](https://gss.norc.org/get-the-data/stata)
-2. Download the **GSS Cumulative Data File (1972–2024), Release 2** (Stata format)
-3. Place the `.dta` file in this directory and rename it to `gss7224_r2.dta`
+2. Download the **GSS Cumulative Data File (1972–2024), Release 3** (Stata format)
+3. Place the `.dta` file in this directory and rename it to `gss7224_r3.dta`
 
 The path is defined in `00_setup.R`:
 
 ```r
-GSS_DTA_PATH <- "data/gss7224_r2.dta"
+GSS_DTA_PATH <- "data/gss7224_r3.dta"
 ```
 
 ## Generated Files (Do Not Commit)
 
 The following files are created when you run the pipeline and should not be committed to the repository (excluded via `.gitignore`):
 
-- `gss_data_16to24_r2.rds` — Intermediate RDS from `01_data_preparation.qmd` (users can regenerate by running step 1)
+- `gss_data_16to24_r3.rds` — Intermediate RDS from `01_data_preparation.qmd` (users can regenerate by running step 1)
 
 Intermediate data outputs from later pipeline steps are saved to `outputs/data/` and `outputs/figures/`.

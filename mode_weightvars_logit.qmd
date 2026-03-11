@@ -35,7 +35,7 @@ dir.create(fig_dir, recursive = TRUE, showWarnings = FALSE)
 
 # --- Load Data ---
 if (!exists("gss_data")) {
-  gss_data <- readRDS("gss_data_16to24_r2.rds") 
+  gss_data <- readRDS("gss_data_16to24_r3.rds") 
   print("Using existing or simulated 'gss_data'.")
 }
 
