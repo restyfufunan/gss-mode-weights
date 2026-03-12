@@ -252,6 +252,28 @@ domain_var_table %>%
 
 ------------------------------------------------------------------------
 
+## Helper: Plot Theme
+
+```{r theme-helper}
+# Centralised theme so tweaks propagate to all plots
+forest_theme <- function(base_size = 11) {
+  theme_bw(base_size = base_size) +
+    theme(
+      plot.title        = element_text(hjust = 0.5, face = "bold", size = base_size + 3),
+      plot.subtitle     = element_text(hjust = 0.5, size = base_size),
+      legend.position   = "bottom",
+      legend.text       = element_text(size = base_size - 2),
+      legend.title      = element_text(face = "bold"),
+      strip.placement   = "outside",
+      strip.background  = element_blank(),
+      strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
+      panel.grid.minor  = element_blank()
+    )
+}
+```
+
+------------------------------------------------------------------------
+
 ## Forest Plot — All Variables (Appendix)
 
 ### Full Forest Plot Across All Variables
@@ -283,18 +305,7 @@ if (nrow(plot_data_all) > 0) {
       x        = "Estimated Proportion",
       y        = NULL
     ) +
-    theme_bw() +
-    theme(
-      plot.title        = element_text(hjust = 0.5, face = "bold", size = 14),
-      plot.subtitle     = element_text(hjust = 0.5, size = 11),
-      legend.position   = "bottom",
-      legend.text       = element_text(size = 9),
-      axis.text.y       = element_text(size = 8),
-      strip.placement   = "outside",
-      strip.background  = element_blank(),
-      strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
-      legend.title      = element_text(face = "bold")
-    ) +
+    forest_theme() +
     coord_cartesian(xlim = c(0, 1))
 
   forest_all
@@ -307,7 +318,7 @@ if (nrow(plot_data_all) > 0) {
   )
 
   # --- Per-domain forest plots ---
-  plot_domain <- function(domain_name, data, colors, levels, legend) {
+  plot_domain <- function(domain_name, data) {
     domain_data <- data %>% filter(as.character(domain) == domain_name)
     n_vars      <- n_distinct(domain_data$variable)
     p <- ggplot(domain_data,
@@ -316,7 +327,7 @@ if (nrow(plot_data_all) > 0) {
       geom_errorbarh(aes(xmin = ci_lower, xmax = ci_upper),
                      position = position_dodge(width = 0.7),
                      height = 0, linewidth = 0.8) +
-      scale_color_manual(values = colors, breaks = legend, name = "Group") +
+      scale_color_manual(values = color_mapping, breaks = legend_order, name = "Group") +
       guides(color = guide_legend(nrow = 2, byrow = TRUE)) +
       labs(
         title    = domain_name,
@@ -324,15 +335,7 @@ if (nrow(plot_data_all) > 0) {
         x        = "Estimated Proportion",
         y        = NULL
       ) +
-      theme_bw() +
-      theme(
-        plot.title      = element_text(hjust = 0.5, face = "bold", size = 13),
-        plot.subtitle   = element_text(hjust = 0.5, size = 10),
-        legend.position = "bottom",
-        legend.text     = element_text(size = 9),
-        axis.text.y     = element_text(size = 9),
-        legend.title    = element_text(face = "bold")
-      ) +
+      forest_theme() +
       coord_cartesian(xlim = c(0, 1))
     list(plot = p, height = max(4, n_vars * 0.45))
   }
@@ -348,7 +351,7 @@ if (nrow(plot_data_all) > 0) {
 
   domains_present <- levels(droplevels(plot_data_all$domain))
   for (dom in domains_present) {
-    result <- plot_domain(dom, plot_data_all, color_mapping, group_levels, legend_order)
+    result <- plot_domain(dom, plot_data_all)
     fname  <- paste0("forest_", safe_name(dom), ".png")
     ggsave(
       file.path(out_fig_domains, fname),
@@ -407,18 +410,7 @@ if (nrow(plot_data_racial) > 0) {
         "FTF/Phone (orange); Web (teal); Full sample (black); Baseline 2016–18 (gray)."
       )
     ) +
-    theme_bw() +
-    theme(
-      plot.title        = element_text(hjust = 0.5, face = "bold", size = 14),
-      plot.subtitle     = element_text(hjust = 0.5, size = 11),
-      legend.position   = "bottom",
-      legend.text       = element_text(size = 9),
-      axis.text.y       = element_text(size = 9),
-      strip.placement   = "outside",
-      strip.background  = element_blank(),
-      strip.text.y.left = element_text(angle = 0, face = "bold", hjust = 1),
-      legend.title      = element_text(face = "bold")
-    ) +
+    forest_theme() +
     coord_cartesian(xlim = c(0, 1))
 
   forest_racial
@@ -567,16 +559,14 @@ outlier_data <- outlier_data %>%
     nudge_x   = if_else(mode_label == "FTF/Phone", -0.05, 0.05)
   )
 
-mode_colors <- c("FTF/Phone" = "#D95F02", "Full Sample" = "#666666", "Web" = "#1B9E77")
-
 violin_plot <- ggplot(closeness_long,
-                      aes(x = mode_label, y = distance, fill = mode_label)) +
-  geom_violin(alpha = 0.55, trim = TRUE) +
+                      aes(x = mode_label, y = distance)) +
+  geom_violin(alpha = 0.55, trim = TRUE, fill = "gray90") +
   geom_boxplot(width = 0.15, alpha = 0.85, outlier.shape = NA,
                color = "gray20") +
   # Outlier dots
   geom_point(data = outlier_data,
-             aes(x = mode_label, y = distance, color = mode_label),
+             aes(x = mode_label, y = distance),
              size = 2, inherit.aes = FALSE) +
   # Outlier labels — offset horizontally away from violin
   geom_text(data = outlier_data,
@@ -587,8 +577,6 @@ violin_plot <- ggplot(closeness_long,
             size = 2.5, color = "gray25", inherit.aes = FALSE) +
   stat_summary(fun = mean, geom = "point", shape = 23, size = 3,
                fill = "white", color = "black") +
-  scale_fill_manual(values  = mode_colors, name = NULL) +
-  scale_color_manual(values = mode_colors, guide = "none") +
   scale_y_continuous(
     labels = scales::number_format(accuracy = 0.01),
     limits = c(0, NA),

@@ -166,7 +166,7 @@ reweight <- function(df, subset_parameter) {
 
 ## DIAGNOSTICS: Demographic Balance Check
 
-This section uses the data loaded in Setup to visualize selection bias. We compare the **Target** (Full Sample, Weighted) against the **F2F** and **Web** subsamples, looking at both their **Unweighted** (raw) and **Original Weighted** (`wtssps`) distributions.
+This section uses the data loaded in Setup to visualize selection bias. We compare the **Target** (Full Sample, Weighted) against the **FTF/Phone** and **Web** subsamples, looking at both their **Unweighted** (raw) and **Original Weighted** (`wtssps`) distributions.
 
 ```{r diagnostics, message=FALSE, warning=FALSE, fig.height=10, fig.width=10}
 # --- 1. PREP DIAGNOSTIC DATA ---
@@ -226,14 +226,14 @@ calc_diag_props <- function(data, group_label, weight_col = NULL) {
 # A. Target: Full Sample (wtssps)
 props_target <- calc_diag_props(diag_data, "1. Target (Full, wtssps)", "wtssps")
 
-# B. F2F: Unweighted
-props_f2f_unw <- calc_diag_props(diag_data %>% filter(mode %in% 1:2), "2. F2F (Unweighted)", NULL)
+# B. FTF/Phone: Unweighted
+props_f2f_unw <- calc_diag_props(diag_data %>% filter(mode %in% 1:2), "2. FTF/Phone (Unweighted)", NULL)
 
 # C. Web: Unweighted
 props_web_unw <- calc_diag_props(diag_data %>% filter(mode == 4), "3. Web (Unweighted)", NULL)
 
-# D. F2F: Original Weight (wtssps)
-props_f2f_wt <- calc_diag_props(diag_data %>% filter(mode %in% 1:2), "4. F2F (wtssps)", "wtssps")
+# D. FTF/Phone: Original Weight (wtssps)
+props_f2f_wt <- calc_diag_props(diag_data %>% filter(mode %in% 1:2), "4. FTF/Phone (wtssps)", "wtssps")
 
 # E. Web: Original Weight (wtssps)
 props_web_wt <- calc_diag_props(diag_data %>% filter(mode == 4), "5. Web (wtssps)", "wtssps")
