@@ -1,0 +1,173 @@
+var,category,var_variant,variant_notes,analytic_core,domain,coalesced,coalesce_notes,binarized_logic,binarize_notes
+ABANY,Legalized abortion,ABANYG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(abanyg), abanyg, abany)",binary,NA
+ABDEFECT,Legalized abortion,ABDEFECTG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(abdefectg), abdefectg, abdefect)",binary,NA
+ABHLTH,Legalized abortion,ABHLTHG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(abhlthg), abhlthg, abhlth)",binary,NA
+ABNOMORE,Legalized abortion,ABNOMOREG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(abnomoreg), abnomoreg, abnomore)",binary,NA
+ABPOOR,Legalized abortion,ABPOORG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(abpoorg), abpoorg, abpoor)",binary,NA
+ABRAPE,Legalized abortion,ABRAPEG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(abrapeg), abrapeg, abrape)",binary,NA
+ABSINGLE,Legalized abortion,ABSINGLEG,gridded experiment (-g),1,Social Attitudes & Morality,1,"if_else(form == 1 & !is.na(absingleg), absingleg, absingle)",binary,NA
+AFFRMACT,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,binary,"to0=1:2, to1=3:4"
+AGED,Subjective well-being and social life orientations,"AGEDV,AGEDNV",volunteered response variant (-v/-nv),0,NA,NA,NA,NA,NA
+ATTEND,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,binary,"to0=0:4, to1=5:8"
+BIBLE,Religious attitudes and behavior,"BIBLEV,BIBLENV",volunteered response variant (-v/-nv),1,Religion,1,"if_else(!is.na(biblev), biblev, if_else(!is.na(biblenv), biblenv, bible))",binary,"to0=2:4, to1=1"
+CAPPUN,Crime punishment and firearms,NA,NA,1,"Crime, Punishment & Firearms",NA,NA,binary,"to0=2, to1=1"
+CHLDIDEL,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=0:2, to1=3:8"
+CLASS,Class identification and economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,4-cat,"to0=1:2, to1=3:4"
+COLATH,Civil liberties (Stouffer),NA,NA,1,Civil Liberties & Government,NA,NA,binary,"to0=4, to1=5"
+COLCOM,Civil liberties (Stouffer),COLCOMY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(colcomy), colcomy, colcom)",binary,"to0=4, to1=5"
+COLHOMO,Civil liberties (Stouffer),NA,NA,0,Civil Liberties & Government,NA,NA,NA,NA
+COLMIL,Civil liberties (Stouffer),NA,NA,0,Civil Liberties & Government,NA,NA,NA,NA
+COLMSLM,Civil liberties (Stouffer),NA,NA,1,Civil Liberties & Government,NA,NA,binary,"to0=4, to1=5"
+COLRAC,Civil liberties (Stouffer),NA,NA,1,Civil Liberties & Government,NA,NA,binary,"to0=4, to1=5"
+CONARMY,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONBUS,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONCLERG,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONEDUC,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONFED,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONFINAN,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONJUDGE,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONLABOR,Confidence in institutions,CONLABORY,wording experiment (-y); implemented in QMD but variant not tracked in opinions CSV,1,Institutional Confidence,1,"if_else(form == 2 & !is.na(conlabory), conlabory, conlabor)",3-cat,NA
+CONLEGIS,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONMEDIC,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONPRESS,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONSCI,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+CONTV,Confidence in institutions,NA,NA,1,Institutional Confidence,NA,NA,3-cat,NA
+COURTS,Crime punishment and firearms,"COURTSV,COURTSNV",volunteered response variant (-v/-nv),1,"Crime, Punishment & Firearms",1,"if_else(!is.na(courtsv), courtsv, if_else(!is.na(courtsnv), courtsnv, courts))",binary,"to0=c(1,3), to1=2"
+DISCAFF,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,3-cat,NA
+DISCAFFM,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+DISCAFFW,Gender roles,"DISCAFFWV,DISCAFFWNV",volunteered response variant (-v/-nv),0,Social Attitudes & Morality,0,NA,binary,Web-mode cells absent in base variable; all web cases route to -V/-NV variants
+DIVLAW,Family & Children,"DIVLAWV,DIVLAWNV",volunteered response variant (-v/-nv),1,Religion,1,"if_else(!is.na(divlawv), divlawv, if_else(!is.na(divlawnv), divlawnv, divlaw))",3-cat,NA
+EQWLTH,Government Intervention,NA,NA,1,Civil Liberties & Government,NA,NA,binary,"to0=1:3, to1=4:7"
+FAIR,Subjective well-being and social life orientations,"FAIRV,FAIRNV",volunteered response variant (-v/-nv),1,Well-being & Life Orientations,1,"if_else(!is.na(fairv), fairv, if_else(!is.na(fairnv), fairnv, fair))",binary,"to0=1, to1=2"
+FEAR,Crime punishment and firearms,NA,NA,1,"Crime, Punishment & Firearms",NA,NA,binary,"to0=2, to1=1"
+FECHLD,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+FEFAM,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+FEHIRE,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,5-cat,NA
+FEOVRWRK,Gender roles,NA,NA,0,NA,NA,NA,NA,NA
+FEPOL,Gender roles,"FEPOLV,FEPOLNV",volunteered response variant (-v/-nv),1,Social Attitudes & Morality,1,"if_else(!is.na(fepolv), fepolv, if_else(!is.na(fepolnv), fepolnv, fepol))",binary,"to0=1, to1=2"
+FEJOBAFF,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+FEPRESCH,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+FINALTER,Class identification and economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+FINRELA,Class identification and economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,5-cat,NA
+FUCITZN,Priorities for national spending,"FUCITZNV,FUCITZNNV",volunteered response variant (-v/-nv),0,NA,NA,NA,NA,NA
+GETAHEAD,Economic well-being,"GETAHEADV,GETAHEADNV",volunteered response variant (-v/-nv),1,Political & Economic Orientations,1,"if_else(!is.na(getaheadv), getaheadv, if_else(!is.na(getaheadnv), getaheadnv, getahead))",binary,"to0=2:3, to1=1"
+GOD,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,binary,"to0=1:3, to1=4:6"
+GOODLIFE,Economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,5-cat,NA
+GRASS,Crime punishment and firearms,"GRASSV,GRASSNV",volunteered response variant (-v/-nv),1,"Crime, Punishment & Firearms",1,"if_else(!is.na(grassv), grassv, if_else(!is.na(grassnv), grassnv, grass))",binary,"to0=2, to1=1"
+GUNLAW,Crime punishment and firearms,NA,NA,1,"Crime, Punishment & Firearms",NA,NA,binary,"to0=2, to1=1"
+HAPPY,Subjective well-being and social life orientations,NA,NA,1,Well-being & Life Orientations,NA,NA,3-cat,NA
+HEALTH,Subjective well-being and social life orientations,NA,NA,1,Well-being & Life Orientations,NA,NA,4-cat,"to0=1:2, to1=3:4"
+HELPBLK,Government Intervention,NA,NA,1,Civil Liberties & Government,NA,NA,5-cat,NA
+HELPFUL,Subjective well-being and social life orientations,"HELPFULV,HELPFULNV",volunteered response variant (-v/-nv),1,Well-being & Life Orientations,1,"if_else(!is.na(helpfulv), helpfulv, if_else(!is.na(helpfulnv), helpfulnv, helpful))",binary,"to0=1, to1=2"
+HELPNOT,Government Intervention,NA,NA,1,Civil Liberties & Government,NA,NA,5-cat,NA
+HELPOTH,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,5-cat,NA
+HELPPOOR,Government Intervention,NA,NA,1,Civil Liberties & Government,NA,NA,5-cat,NA
+HELPSICK,Government Intervention,NA,NA,1,Civil Liberties & Government,NA,NA,5-cat,NA
+HOMOSEX,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+IF16WHO,Voting and political preferences,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+IF20WHO,Voting and political preferences,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+INTLBLKS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+INTLHSPS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+INTLWHTS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+JOBFIND,Work orientation,NA,NA,1,Well-being & Life Orientations,NA,NA,3-cat,NA
+JOBLOSE,Work orientation,NA,NA,1,Well-being & Life Orientations,NA,NA,4-cat,"to0=1:2, to1=3:4"
+KIDSSOL,Economic well-being,"KIDSSOLV,KIDSSOLNV",volunteered response variant (-v/-nv),1,Political & Economic Orientations,1,"if_else(!is.na(kidssolv) & kidssolv <= 5, kidssolv, if_else(!is.na(kidssolnv) & kidssolnv <= 5, kidssolnv, kidssol))",5-cat,NA
+LETDIE1,Suicide,LETDIE1Y,gender-neutral wording experiment (-y),1,Well-being & Life Orientations,1,"if_else(form == 2 & !is.na(letdie1y), letdie1y, letdie1)",binary,"to0=2, to1=1"
+LETIN1A,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,5-cat,NA
+LIBATH,Civil liberties (Stouffer),LIBATHY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(libathy), libathy, libath)",binary,"to0=1, to1=2"
+LIBCOM,Civil liberties (Stouffer),LIBCOMY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(libcomy), libcomy, libcom)",binary,"to0=1, to1=2"
+LIBHOMO,Civil liberties (Stouffer),NA,not fielded 2022/2024,0,Civil Liberties & Government,NA,NA,NA,NA
+LIBMIL,Civil liberties (Stouffer),NA,not fielded 2022/2024,0,Civil Liberties & Government,NA,NA,NA,NA
+LIBMSLM,Civil liberties (Stouffer),LIBMSLMY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(libmslmy), libmslmy, libmslm)",binary,"to0=1, to1=2"
+LIBRAC,Civil liberties (Stouffer),LIBRACY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(libracy), libracy, librac)",binary,"to0=1, to1=2"
+LIFE,Subjective wellbeing,NA,NA,1,Well-being & Life Orientations,NA,NA,binary,"to0=1, to1=2:3"
+LIVEBLKS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+LIVEWHTS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MARASIAN,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MARBLK,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MARHISP,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MARSAME,Sexual behavior,"MARSAME1,MARSAMEY",marsame1=2016/2018 inadvertent wording (missing should); marsamey=2024 Form 2 wording experiment,1,Social Attitudes & Morality,1,"if_else(is.na(marsame) & !is.na(marsame1), marsame1, marsame); if_else(form == 2 & !is.na(marsamey), marsamey, marsame)",5-cat,CAUTION: wording reversion from marsame1 to marsame collinear with FTF-to-web transition in 2022
+MARWHT,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MEOVRWRK,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+NATAID,Priorities for national spending,NATAIDY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(nataidy), nataidy, nataid)",3-cat,NA
+NATARMS,Priorities for national spending,NATARMSY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natarmsy), natarmsy, natarms)",3-cat,NA
+NATCHLD,Priorities for national spending,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+NATCITY,Priorities for national spending,NATCITYY,wording experiment (-y); NOT coalesced — large stable wording gap (~0.15pp),1,Political & Economic Orientations,0,NA,3-cat,Analyzed separately from NATCITYY
+NATCITYY,Priorities for national spending,NA,Form 2 variant of NATCITY; large stable wording gap (~0.15pp across all years/modes),1,Political & Economic Orientations,NA,NA,3-cat,Analyzed separately from NATCITY
+NATCRIME,Priorities for national spending,NATCRIMY,wording experiment (-y),1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natcrimy), natcrimy, natcrime)",3-cat,NA
+NATDRUG,Priorities for national spending,NATDRUGY,wording experiment (-y); small stable gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natdrugy), natdrugy, natdrug)",3-cat,NA
+NATEDUC,Priorities for national spending,NATEDUCY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(nateducy), nateducy, nateduc)",3-cat,NA
+NATENRGY,Priorities for national spending,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+NATENVIR,Priorities for national spending,NATENVIRY,wording experiment (-y),1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natenviy), natenviy, natenvir)",3-cat,NA
+NATFARE,Priorities for national spending,NATFAREY,wording experiment (-y); NOT coalesced — large stable wording gap (~0.20pp),1,Political & Economic Orientations,0,NA,3-cat,Analyzed separately from NATFAREY
+NATFAREY,Priorities for national spending,NA,Form 2 variant of NATFARE ('assistance to the poor' replacing 'welfare'); large stable wording gap (~0.20pp across all years/modes),1,Political & Economic Orientations,NA,NA,3-cat,Analyzed separately from NATFARE
+NATHEAL,Priorities for national spending,NATHEALY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(nathealy), nathealy, natheal)",3-cat,NA
+NATMASS,Priorities for national spending,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+NATPARK,Priorities for national spending,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+NATRACE,Priorities for national spending,NATRACEY,wording experiment (-y); small stable gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natracey), natracey, natrace)",3-cat,NA
+NATROAD,Priorities for national spending,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+NATSCI,Priorities for national spending,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+NATSOC,Priorities for national spending,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+NATSPAC,Priorities for national spending,NATSPACY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natspacy), natspacy, natspac)",3-cat,NA
+OBEY,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,5-cat,NA
+PARSOL,Economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,5-cat,NA
+PARTYID,Voting and political preferences,NA,NA,1,Political & Economic Orientations,NA,NA,7-cat,NA
+PILLOK,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=3:4, to1=1:2"
+POLABUSE,Crime punishment and firearms,POLABUSEY,gender-neutral wording experiment (-y),1,"Crime, Punishment & Firearms",1,"if_else(form == 2 & !is.na(polabusey), polabusey, polabuse)",binary,"to0=2, to1=1"
+POLATTAK,Crime punishment and firearms,POLATTAKY,gender-neutral wording experiment (-y),1,"Crime, Punishment & Firearms",1,"if_else(form == 2 & !is.na(polattaky), polattaky, polattak)",binary,"to0=2, to1=1"
+POLESCAP,Crime punishment and firearms,NA,NA,1,"Crime, Punishment & Firearms",NA,NA,binary,"to0=2, to1=1"
+POLHITOK,Crime punishment and firearms,POLHITOKY,gender-neutral wording experiment (-y),1,"Crime, Punishment & Firearms",1,"if_else(form == 2 & !is.na(polhitoky), polhitoky, polhitok)",binary,"to0=2, to1=1"
+POLMURDR,Crime punishment and firearms,NA,NA,1,"Crime, Punishment & Firearms",NA,NA,binary,"to0=2, to1=1"
+POLVIEWS,Voting and political preferences,NA,NA,1,Political & Economic Orientations,NA,NA,binary,"to0=1:4, to1=5:7"
+POPULAR,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,5-cat,NA
+PORNLAW,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,3-cat,NA
+POSTLIFE,Religious attitudes and behavior,"POSTLIFEV,POSTLIFENV",volunteered response variant (-v/-nv),1,Religion,1,"if_else(!is.na(postlifev), postlifev, if_else(!is.na(postlifenv), postlifenv, postlife))",binary,"to0=2, to1=1"
+PRAY,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,binary,"to0=4:6, to1=1:3"
+PRAYER,Religion,"PRAYERV,PRAYERNV",volunteered response variant (-v/-nv),1,Religion,1,"if_else(!is.na(prayerv), prayerv, if_else(!is.na(prayernv), prayernv, prayer))",binary,"to0=2, to1=1"
+PREMARSX,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:3, to1=4"
+PRES16,Voting and political preferences,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+PRES20,Voting and political preferences,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+RACDIF1,Racial attitudes and stereotypes,RACDIF1X,wording experiment (-x); negligible gap,1,Race & Inequality,1,"if_else(form == 1 & !is.na(racdif1x), racdif1x, racdif1)",binary,"to0=2, to1=1"
+RACDIF2,Racial attitudes and stereotypes,RACDIF2X,wording experiment (-x); negligible gap,1,Race & Inequality,1,"if_else(form == 1 & !is.na(racdif2x), racdif2x, racdif2)",binary,"to0=2, to1=1"
+RACDIF3,Racial attitudes and stereotypes,RACDIF3X,wording experiment (-x); negligible gap,1,Race & Inequality,1,"if_else(form == 1 & !is.na(racdif3x), racdif3x, racdif3)",binary,"to0=2, to1=1"
+RACDIF4,Racial attitudes and stereotypes,RACDIF4X,wording experiment (-x); negligible gap,1,Race & Inequality,1,"if_else(form == 1 & !is.na(racdif4x), racdif4x, racdif4)",binary,"to0=2, to1=1"
+RACDIF5,Racial attitudes and stereotypes,RACDIF5X,wording experiment (-x),0,Race & Inequality,NA,NA,NA,NA
+RACOPEN,Racial attitudes,"RACOPENV,RACOPENNV",volunteered response variant (-v/-nv),1,Race & Inequality,1,"if_else(!is.na(racopenv), racopenv, if_else(!is.na(racopennv), racopennv, racopen))",binary,"to0=1, to1=2"
+RACWORK,Racial attitudes and stereotypes,NA,NA,0,NA,NA,NA,NA,NA
+RANK,Class identification and economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,binary,"to0=6:10, to1=1:5"
+REBORN,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,binary,"to0=2, to1=1"
+RELACTIV,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,binary,"to0=1:4, to1=5:10"
+RELITEN,Religious attitudes and behavior,"RELITENV,RELITENNV",volunteered response variant (-v/-nv),0,NA,NA,NA,NA,NA
+RELPERSN,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,4-cat,"to0=1:2, to1=3:4"
+RICHWORK,Work orientation,NA,NA,1,Well-being & Life Orientations,NA,NA,binary,"to0=2, to1=1"
+SATFIN,Class identification and economic well-being,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
+SATJOB,Work orientation,NA,NA,1,Well-being & Life Orientations,NA,NA,4-cat,"to0=1:2, to1=3:4"
+SEXEDUC,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=2, to1=1"
+SPANKING,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,4-cat,"to0=1:2, to1=3:4"
+SPKATH,Civil liberties (Stouffer),SPKATHY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(spkathy), spkathy, spkath)",binary,"to0=1, to1=2"
+SPKCOM,Civil liberties (Stouffer),SPKCOMY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(spkcomy), spkcomy, spkcom)",binary,"to0=1, to1=2"
+SPKHOMO,Civil liberties (Stouffer),NA,not fielded 2022/2024,0,Civil Liberties & Government,NA,NA,NA,NA
+SPKMIL,Civil liberties (Stouffer),NA,not fielded 2022/2024,0,Civil Liberties & Government,NA,NA,NA,NA
+SPKMSLM,Civil liberties (Stouffer),SPKMSLMY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(spkmslmy), spkmslmy, spkmslm)",binary,"to0=1, to1=2"
+SPKRAC,Civil liberties (Stouffer),SPKRACY,gender-neutral wording experiment (-y),1,Civil Liberties & Government,1,"if_else(form == 2 & !is.na(spkracy), spkracy, spkrac)",binary,"to0=1, to1=2"
+SPRTPRSN,Religious attitudes and behavior,NA,NA,1,Religion,NA,NA,4-cat,"to0=1:2, to1=3:4"
+SUICIDE1,Suicide,SUICIDE1G,gridded experiment (-g),1,Well-being & Life Orientations,1,"if_else(form == 1 & !is.na(suicide1g), suicide1g, suicide1)",binary,"to0=2, to1=1"
+SUICIDE2,Suicide,SUICIDE2G,gridded experiment (-g),1,Well-being & Life Orientations,1,"if_else(form == 1 & !is.na(suicide2g), suicide2g, suicide2)",binary,"to0=2, to1=1"
+SUICIDE4,Suicide,SUICIDE4G,gridded experiment (-g),1,Well-being & Life Orientations,1,"if_else(form == 1 & !is.na(suicide4g), suicide4g, suicide4)",binary,"to0=2, to1=1"
+TAX,Tax attitudes,NA,NA,1,Political & Economic Orientations,NA,NA,binary,"to0=2:3, to1=1"
+TEENSEX,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
+THNKSELF,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,5-cat,NA
+TRUST,Subjective well-being and social life orientations,"TRUSTV,TRUSTNV",volunteered response variant (-v/-nv),1,Well-being & Life Orientations,1,"if_else(!is.na(trustv), trustv, if_else(!is.na(trustnv), trustnv, trust))",binary,"to0=1, to1=2"
+USCITZN,Priorities for national spending,"USCITZNV,USCITZNNV",volunteered response variant (-v/-nv),0,NA,NA,NA,NA,NA
+VOTE16,Voting and political preferences,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+VOTE20,Voting and political preferences,NA,NA,0,Political & Economic Orientations,NA,NA,NA,NA
+WLTHBLKS,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,7-cat,NA
+WLTHHSPS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+WLTHWHTS,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,7-cat,NA
+WORKBLKS,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,7-cat,NA
+WORKHARD,Family & children,NA,NA,1,Social Attitudes & Morality,NA,NA,5-cat,NA
+WORKHSPS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+WORKWHTS,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,7-cat,NA
+WRKWAYUP,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,5-cat,NA
+XMARSEX,Sexual behavior,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1, to1=2:4"
+XMOVIE,Sexual behavior,XMOVIEY,wording experiment (-y); NOT coalesced — large wording gap (~0.17-0.22pp web); XMOVIE is Form 1 half-sample in 2022/2024,1,Social Attitudes & Morality,0,NA,binary,"to0=2, to1=1"

@@ -226,13 +226,13 @@ for (var in c_vars) {
 ```{r topic-mapping}
 # Read domain and topic assignments directly from the analytic core registry.
 # The eight final domains and variable-level overrides (e.g., CAPPUN, DISCAFF,
-# LETIN1A) are already incorporated in data/analytic_core.csv.
-topic_mapping <- readr::read_csv("data/analytic_core.csv", show_col_types = FALSE) |>
+# LETIN1A) are already incorporated in data/gss24_attitudes_opinions.csv.
+topic_mapping <- readr::read_csv("data/gss24_attitudes_opinions.csv", show_col_types = FALSE) |>
   dplyr::filter(analytic_core == 1) |>
   dplyr::transmute(
-    varname  = variable,
-    variable = paste0("c_", tolower(variable)),
-    topic    = source_topic,
+    varname  = var,
+    variable = paste0("c_", tolower(var)),
+    topic    = category,
     domain   = factor(domain, levels = domain_order)
   )
 

@@ -11,7 +11,7 @@ Recodes subjective items from the 2016–2024 General Social Survey cumulative f
 2.  **Binarization** — converts ordinal scales into 0/1 outcomes using distribution-based split rules.
 3.  **Filtering** — restricts to 2016, 2018, 2022, and 2024.
 
-Only variables in the analytic core (`data/analytic_core.csv`, `analytic_core == 1`) are used in downstream files; recodes for excluded items are omitted here.
+Only variables in the analytic core (`data/gss24_attitudes_opinions.csv`, `analytic_core == 1`) are used in downstream files; recodes for excluded items are omitted here.
 
 ------------------------------------------------------------------------
 
@@ -100,29 +100,47 @@ gss7cats <- function(data, vars) {
 
 ## 3. Recoding
 
+```{r experiment-types-reference}
+# EXPERIMENT TYPES IN THIS FILE
+# -G  (grid):        Web only. Items presented in condensed grid layout (Form 1).
+#                    Original item on Form 2. Negligible effect on marginals.
+# -Y  (wording):     Both modes. Alternate wording on Form 2; original on Form 1
+#                    (or vice versa depending on variable — see per-block notes).
+#                    Most gaps negligible; NATCITY/NATFARE exceptions (see below).
+# -X  (wording):     Both modes. Alternate intro wording on Form 1; original on
+#                    Form 2. Used for RACDIF series. Negligible effect on marginals.
+# -V/-NV (volunteered response): Web only. -V shows a volunteered response option
+#                    on screen (Form 2); -NV omits it (Form 1). Base variable
+#                    contains FTF/phone respondents only. Large V vs. NV gaps are
+#                    expected and do not affect coalesce validity.
+```
+
 ### National Spending Items
 
-Coalesces Form 2 variants (`-y` suffix) into main variable names before recoding.
+Coalesces Form 2 variants (`-y` suffix) into main variable names before recoding, with exceptions: NATCITY and NATFARE are NOT coalesced with their -Y variants (see note below).
 
 ```{r nat-spend}
+# NATCITY and NATFARE are NOT coalesced with their -Y variants (NATCITYY, NATFAREY).
+# The wording gap between forms is large and stable (~0.15pp and ~0.20pp respectively,
+# across all years and modes). Both forms are fielded across all six year-mode cells
+# and are treated as separate analytic variables.
+
 gss_data <- gss_data %>%
   mutate(
-    natspac  = if_else(form == 2 & !is.na(natspacy),  natspacy,  natspac),
-    natenvir = if_else(form == 2 & !is.na(natenviy),  natenviy,  natenvir),
-    natheal  = if_else(form == 2 & !is.na(nathealy),  nathealy,  natheal),
-    natdrug  = if_else(form == 2 & !is.na(natdrugy),  natdrugy,  natdrug),
-    nateduc  = if_else(form == 2 & !is.na(nateducy),  nateducy,  nateduc),
-    natarms  = if_else(form == 2 & !is.na(natarmsy),  natarmsy,  natarms),
-    natrace  = if_else(form == 2 & !is.na(natracey),  natracey,  natrace),
-    nataid   = if_else(form == 2 & !is.na(nataidy),   nataidy,   nataid),
-    natfare  = if_else(form == 2 & !is.na(natfarey),  natfarey,  natfare),
-    natcity  = if_else(form == 2 & !is.na(natcityy),  natcityy,  natcity),
-    natcrime = if_else(form == 2 & !is.na(natcrimy),  natcrimy,  natcrime)
+    natspac  = if_else(form == 2 & !is.na(natspacy),  natspacy,  natspac),   # -Y: alternate wording Form 2; negligible gap
+    natenvir = if_else(form == 2 & !is.na(natenviy),  natenviy,  natenvir),  # -Y: alternate wording Form 2; negligible gap
+    natheal  = if_else(form == 2 & !is.na(nathealy),  nathealy,  natheal),   # -Y: alternate wording Form 2; negligible gap
+    natdrug  = if_else(form == 2 & !is.na(natdrugy),  natdrugy,  natdrug),   # -Y: alternate wording Form 2; negligible gap
+    nateduc  = if_else(form == 2 & !is.na(nateducy),  nateducy,  nateduc),   # -Y: alternate wording Form 2; negligible gap
+    natarms  = if_else(form == 2 & !is.na(natarmsy),  natarmsy,  natarms),   # -Y: alternate wording Form 2; negligible gap
+    natrace  = if_else(form == 2 & !is.na(natracey),  natracey,  natrace),   # -Y: alternate wording Form 2; negligible gap
+    nataid   = if_else(form == 2 & !is.na(nataidy),   nataidy,   nataid),    # -Y: alternate wording Form 2; negligible gap
+    natcrime = if_else(form == 2 & !is.na(natcrimy),  natcrimy,  natcrime)   # -Y: alternate wording Form 2; negligible gap
   )
 
 natspend_vars <- c("natspac", "natenvir", "natheal", "natcity", "natcrime",
                    "natdrug", "nateduc", "natrace", "natarms", "nataid",
-                   "natfare", "natroad", "natsoc", "natchld", "natsci", "natenrgy")
+                   "natfare", "natcityy", "natfarey", "natroad", "natsoc", "natchld", "natsci", "natenrgy")
 gss_data <- gss3cats(gss_data, vars = natspend_vars)
 ```
 
@@ -133,31 +151,31 @@ Handles Form 1/2 and visual/non-visual (`-v`/`-nv`) flashcard experiments.
 ```{r civil-liberties}
 gss_data <- gss_data %>%
   mutate(
-    conlabor = if_else(form == 2 & !is.na(conlabory), conlabory, conlabor),
-    colcom   = if_else(form == 2 & !is.na(colcomy),   colcomy,   colcom),
-    spkath   = if_else(form == 2 & !is.na(spkathy),   spkathy,   spkath),
-    spkrac   = if_else(form == 2 & !is.na(spkracy),   spkracy,   spkrac),
-    spkcom   = if_else(form == 2 & !is.na(spkcomy),   spkcomy,   spkcom),
-    spkmslm  = if_else(form == 2 & !is.na(spkmslmy),  spkmslmy,  spkmslm),
-    libath   = if_else(form == 2 & !is.na(libathy),   libathy,   libath),
-    librac   = if_else(form == 2 & !is.na(libracy),   libracy,   librac),
-    libcom   = if_else(form == 2 & !is.na(libcomy),   libcomy,   libcom),
-    libmslm  = if_else(form == 2 & !is.na(libmslmy),  libmslmy,  libmslm),
-    letdie1  = if_else(form == 2 & !is.na(letdie1y),  letdie1y,  letdie1),
-    fepol    = if_else(!is.na(fepolv),   fepolv,   if_else(!is.na(fepolnv),   fepolnv,   fepol)),
-    racopen  = if_else(!is.na(racopenv), racopenv, if_else(!is.na(racopennv), racopennv, racopen)),
-    bible    = if_else(!is.na(biblev),   biblev,   if_else(!is.na(biblenv),   biblenv,   bible)),
-    divlaw   = if_else(!is.na(divlawv),  divlawv,  if_else(!is.na(divlawnv),  divlawnv,  divlaw)),
+    conlabor = if_else(form == 2 & !is.na(conlabory), conlabory, conlabor),  # -Y: alternate wording Form 2; negligible gap
+    colcom   = if_else(form == 2 & !is.na(colcomy),   colcomy,   colcom),    # -Y: alternate wording Form 2; negligible gap
+    spkath   = if_else(form == 2 & !is.na(spkathy),   spkathy,   spkath),    # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    spkrac   = if_else(form == 2 & !is.na(spkracy),   spkracy,   spkrac),    # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    spkcom   = if_else(form == 2 & !is.na(spkcomy),   spkcomy,   spkcom),    # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    spkmslm  = if_else(form == 2 & !is.na(spkmslmy),  spkmslmy,  spkmslm),   # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    libath   = if_else(form == 2 & !is.na(libathy),   libathy,   libath),    # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    librac   = if_else(form == 2 & !is.na(libracy),   libracy,   librac),    # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    libcom   = if_else(form == 2 & !is.na(libcomy),   libcomy,   libcom),    # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    libmslm  = if_else(form == 2 & !is.na(libmslmy),  libmslmy,  libmslm),   # -Y gender-neutral: "police officer" replacing "policeman"; negligible gap
+    letdie1  = if_else(form == 2 & !is.na(letdie1y),  letdie1y,  letdie1),   # -Y: alternate wording Form 2; negligible gap
+    fepol    = if_else(!is.na(fepolv),   fepolv,   if_else(!is.na(fepolnv),   fepolnv,   fepol)),     # -V/-NV: volunteered response option; large V-NV gap expected by design
+    racopen  = if_else(!is.na(racopenv), racopenv, if_else(!is.na(racopennv), racopennv, racopen)),   # -V/-NV: volunteered response option; large V-NV gap expected by design
+    bible    = if_else(!is.na(biblev),   biblev,   if_else(!is.na(biblenv),   biblenv,   bible)),     # -V/-NV: volunteered response option; large V-NV gap expected by design
+    divlaw   = if_else(!is.na(divlawv),  divlawv,  if_else(!is.na(divlawnv),  divlawnv,  divlaw)),   # -V/-NV: volunteered response option; large V-NV gap expected by design
     kidssol  = if_else(!is.na(kidssolv) & kidssolv <= 5, kidssolv,
-                       if_else(!is.na(kidssolnv) & kidssolnv <= 5, kidssolnv, kidssol)),
-    grass    = if_else(!is.na(grassv),    grassv,    if_else(!is.na(grassnv),    grassnv,    grass)),
-    prayer   = if_else(!is.na(prayerv),   prayerv,   if_else(!is.na(prayernv),   prayernv,   prayer)),
-    postlife = if_else(!is.na(postlifev), postlifev, if_else(!is.na(postlifenv), postlifenv, postlife)),
-    fair     = if_else(!is.na(fairv),     fairv,     if_else(!is.na(fairnv),     fairnv,     fair)),
-    helpful  = if_else(!is.na(helpfulv),  helpfulv,  if_else(!is.na(helpfulnv),  helpfulnv,  helpful)),
-    trust    = if_else(!is.na(trustv),    trustv,    if_else(!is.na(trustnv),    trustnv,    trust)),
-    getahead = if_else(!is.na(getaheadv), getaheadv, if_else(!is.na(getaheadnv), getaheadnv, getahead)),
-    courts   = if_else(!is.na(courtsv),   courtsv,   if_else(!is.na(courtsnv),   courtsnv,   courts))
+                       if_else(!is.na(kidssolnv) & kidssolnv <= 5, kidssolnv, kidssol)),  # -V/-NV: volunteered response option; large V-NV gap expected by design
+    grass    = if_else(!is.na(grassv),    grassv,    if_else(!is.na(grassnv),    grassnv,    grass)),   # -V/-NV: volunteered response option; large V-NV gap expected by design
+    prayer   = if_else(!is.na(prayerv),   prayerv,   if_else(!is.na(prayernv),   prayernv,   prayer)),  # -V/-NV: volunteered response option; large V-NV gap expected by design
+    postlife = if_else(!is.na(postlifev), postlifev, if_else(!is.na(postlifenv), postlifenv, postlife)), # -V/-NV: volunteered response option; large V-NV gap expected by design
+    fair     = if_else(!is.na(fairv),     fairv,     if_else(!is.na(fairnv),     fairnv,     fair)),     # -V/-NV: volunteered response option; large V-NV gap expected by design
+    helpful  = if_else(!is.na(helpfulv),  helpfulv,  if_else(!is.na(helpfulnv),  helpfulnv,  helpful)),  # -V/-NV: volunteered response option; large V-NV gap expected by design
+    trust    = if_else(!is.na(trustv),    trustv,    if_else(!is.na(trustnv),    trustnv,    trust)),    # -V/-NV: volunteered response option; large V-NV gap expected by design
+    getahead = if_else(!is.na(getaheadv), getaheadv, if_else(!is.na(getaheadnv), getaheadnv, getahead)), # -V/-NV: volunteered response option; large V-NV gap expected by design
+    courts   = if_else(!is.na(courtsv),   courtsv,   if_else(!is.na(courtsnv),   courtsnv,   courts))    # -V/-NV: volunteered "about right"; large V-NV gap expected by design
   )
 
 confidence_vars <- c("confinan", "conbus", "conclerg", "coneduc", "confed",
@@ -172,22 +190,24 @@ gss_data <- gssrecode(gss_data, vars = c("spkath", "spkrac", "spkcom", "spkmslm"
 
 ### Abortion and Police
 
-Form 1 grid (`-g`) and Form 2 gender-neutral (`-y`) variants.
+Form 1 grid (`-g`) for abortion items (web only; negligible effect). Form 2 wording (`-y`) for police items (both modes; negligible gap).
 
 ```{r abortion-police}
+# Abortion -G variants: web-only grid layout (Form 1). Original on Form 2. Negligible marginal effect.
 abortion_vars <- c("abdefect", "abnomore", "abhlth", "abpoor", "abrape", "absingle", "abany")
 for (var in abortion_vars) {
   source_var <- paste0(var, "g")
   gss_data <- gss_data %>%
-    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))  # -G: grid layout Form 1; negligible gap
 }
 gss_data <- gssrecode(gss_data, vars = abortion_vars, to0 = 2, to1 = 1)
 
+# Police -Y variants: alternate wording Form 2 (both modes). Negligible gap.
 police_vars <- c("polhitok", "polabuse", "polattak")
 for (var in police_vars) {
   source_var <- paste0(var, "y")
   gss_data <- gss_data %>%
-    mutate(!!sym(var) := if_else(form == 2 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+    mutate(!!sym(var) := if_else(form == 2 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))  # -Y: alternate wording Form 2; negligible gap
 }
 gss_data <- gssrecode(gss_data, vars = c("polhitok", "polabuse", "polmurdr", "polattak", "polescap"), to0 = 2, to1 = 1)
 ```
@@ -198,13 +218,14 @@ gss_data <- gssrecode(gss_data, vars = c("polhitok", "polabuse", "polmurdr", "po
 # Childrearing
 gss_data <- gss5cats(gss_data, vars = c("helpoth", "obey", "thnkself", "workhard", "popular"))
 
-# RACDIF -x variables (Form 1 experimental wording); racdif1-4 only.
-# racdif5 (new in 2024, not fielded in 2016/2018) is excluded from analytic core.
+# RACDIF -X variants (Form 1 experimental wording; both modes).
+# Alternate intro wording on Form 1 (original on Form 2). Negligible effect on marginals.
+# racdif1-4 only; racdif5 (new in 2024, not fielded in 2016/2018) is excluded from analytic core.
 racdif_vars <- c("racdif1", "racdif2", "racdif3", "racdif4")
 for (var in racdif_vars) {
   source_var <- paste0(var, "x")
   gss_data <- gss_data %>%
-    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))
+    mutate(!!sym(var) := if_else(form == 1 & !is.na(.data[[source_var]]), .data[[source_var]], .data[[var]]))  # -X: alternate intro wording Form 1; negligible gap
 }
 gss_data <- gssrecode(gss_data, vars = racdif_vars, to0 = 2, to1 = 1)
 
@@ -220,11 +241,34 @@ gss_data <- gss5cats(gss_data, vars = "wrkwayup")
 ### Gender, Sex, and Suicide
 
 ```{r gender-sex-suicide}
+# MARSAME: two-step coalesce across a wording discontinuity and a wording experiment.
+# #   Step 1 — marsame1 (2016/2018): GSS cumulative file name for the marriage
+#     equality item as fielded 2006–2018, using inadvertent wording — "Homosexual
+#     couples have the right to marry" (missing "should"). This is a factual/
+#     descriptive question rather than a normative one; post-Obergefell (2015),
+#     respondents could agree by acknowledging legal reality alone. The wording
+#     reversion to "should" in marsame (2022+) is perfectly collinear with the
+#     FTF-to-web mode transition. The mode effect estimate for this variable is
+#     therefore potentially confounded by the concurrent wording change and should
+#     be interpreted with caution. See Rosenfeld (2023) addendum.
+# #   Step 2 — marsamey (2024, Form 2): wording experiment replacing "homosexual
+#     couple" with "same-sex couple" (confirmed Form 2 per codebook Table 4).
+#     Negligible distributional gap (~0.03pp FTF, ~0.00pp web in 2024).
+gss_data <- gss_data |>
+  mutate(
+    marsame = if_else(is.na(marsame) & !is.na(marsame1), marsame1, marsame),
+    marsame = if_else(form == 2 & !is.na(marsamey), marsamey, marsame)
+  )
+
 gss_data <- gss5cats(gss_data, vars = "fehire")
 gss_data <- gssrecode(gss_data,
-  vars = c("fechld", "fepresch", "meovrwrk", "fejobaff", "discaffm", "discaffw", "fefam", "affrmact"),
+  vars = c("fechld", "fepresch", "meovrwrk", "fejobaff", "discaffm", "fefam", "affrmact"),
   to0 = 1:2, to1 = 3:4
 )
+gss_data <- gss5cats(gss_data, vars = "marsame")  # 5-point agree/disagree scale (1=Strongly Agree to 5=Strongly Disagree); distribution-based split via gss5cats for consistency with other 5-category variables.
+
+# DISCAFFW excluded: base variable has zero web-mode observations (all web cases
+# route to -V/-NV variants); not in analytic core.
 
 gss_data <- gssrecode(gss_data, vars = c("homosex", "teensex"), to0 = 1:2, to1 = 3:4)
 gss_data <- gssrecode(gss_data, vars = "premarsx", to0 = 1:3, to1 = 4)

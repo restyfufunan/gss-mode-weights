@@ -176,11 +176,11 @@ EDUCATION_LABELS_SHORT <- c(
 #   * No wording discontinuity across the analysis window
 # -----------------------------------------------------------------------------
 ANALYTIC_CORE_VARS <- readr::read_csv(
-  "data/analytic_core.csv",
+  "data/gss24_attitudes_opinions.csv",
   show_col_types = FALSE
 ) |>
   dplyr::filter(analytic_core == 1) |>
-  dplyr::pull(variable) |>
+  dplyr::pull(var) |>
   tolower() |>
   (\(x) paste0("c_", x))()
 
