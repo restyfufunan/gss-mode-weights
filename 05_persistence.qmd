@@ -26,6 +26,7 @@ source("00_setup.R")
 # File-specific libraries not covered by 00_setup.R
 library(gt)
 library(forcats)
+library(ggrepel)
 
 # Output directories
 out_fig    <- "outputs/figures"
@@ -524,9 +525,9 @@ closeness_long <- closeness_results %>%
     mode_label = case_when(
       mode == "dist_to_f2fp" ~ "FTF/Phone",
       mode == "dist_to_web"  ~ "Web",
-      mode == "dist_to_all"  ~ "Full Sample"
+      mode == "dist_to_all"  ~ "Full Sample\n(native weights)"
     ),
-    mode_label = factor(mode_label, levels = c("FTF/Phone", "Full Sample", "Web"))
+    mode_label = factor(mode_label, levels = c("FTF/Phone", "Full Sample\n(native weights)", "Web"))
   )
 
 distance_stats <- closeness_long %>%
@@ -556,55 +557,71 @@ outlier_data <- closeness_long %>%
 outlier_data <- outlier_data %>%
   mutate(
     hjust_val = if_else(mode_label == "FTF/Phone", 1.15, -0.15),
-    nudge_x   = if_else(mode_label == "FTF/Phone", -0.05, 0.05)
-  )
+    nudge_x   = if_else(mode_label == "FTF/Phone", -0.07, 0.07)
+  ) %>%
+  ungroup()
+
+violin_fills <- c(
+  "FTF/Phone"                      = "#D95F02",
+  "Full Sample\n(native weights)"  = "#888888",
+  "Web"                            = "#1B9E77"
+)
 
 violin_plot <- ggplot(closeness_long,
-                      aes(x = mode_label, y = distance)) +
-  geom_violin(alpha = 0.55, trim = TRUE, fill = "gray90") +
-  geom_boxplot(width = 0.15, alpha = 0.85, outlier.shape = NA,
-               color = "gray20") +
-  # Outlier dots
+                      aes(x = mode_label, y = distance, fill = mode_label)) +
+  geom_violin(alpha = 0.55, trim = TRUE) +
+  geom_boxplot(width = 0.15, alpha = 0.85, outlier.shape = NA, color = "gray20") +
   geom_point(data = outlier_data,
-             aes(x = mode_label, y = distance),
-             size = 2, inherit.aes = FALSE) +
+             aes(x = mode_label, y = distance, color = mode_label),
+             size = 2.5, inherit.aes = FALSE) +
   # Outlier labels — offset horizontally away from violin
-  geom_text(data = outlier_data,
-            aes(x    = as.numeric(mode_label) + nudge_x,
-                y    = distance,
-                label = var_label,
-                hjust = hjust_val),
-            size = 2.5, color = "gray25", inherit.aes = FALSE) +
-  stat_summary(fun = mean, geom = "point", shape = 23, size = 3,
+  geom_text_repel(data = outlier_data,
+            aes(x = mode_label, y = distance, label = var_label),
+            nudge_x          = outlier_data$nudge_x * 7,
+            direction        = "y",
+            size             = 4,
+            color            = "gray25",
+            segment.color    = "gray50",
+            segment.size     = 0.3,
+            min.segment.length = 0,
+            inherit.aes      = FALSE) +
+  stat_summary(fun = mean, geom = "point", shape = 23, size = 4,
                fill = "white", color = "black") +
+  scale_fill_manual(values  = violin_fills, guide = "none") +
+  scale_color_manual(values = violin_fills, guide = "none") +
+  # Embed Md/M stats directly in x-axis tick labels
+  scale_x_discrete(
+    labels = setNames(
+      sprintf("%s\nMd = %.3f  M = %.3f",
+              c("FTF/Phone", "Full Sample\n(native weights)", "Web"),
+              distance_stats$median[match(c("FTF/Phone", "Full Sample\n(native weights)", "Web"),
+                                          distance_stats$mode_label)],
+              distance_stats$mean[match(c("FTF/Phone", "Full Sample\n(native weights)", "Web"),
+                                        distance_stats$mode_label)]),
+      c("FTF/Phone", "Full Sample\n(native weights)", "Web")
+    )
+  ) +
   scale_y_continuous(
     labels = scales::number_format(accuracy = 0.01),
     limits = c(0, NA),
     expand = expansion(mult = c(0, 0.08))
   ) +
-  # Stats annotation below each violin
-  geom_text(
-    data = distance_stats,
-    aes(x = mode_label,
-        y = -Inf,
-        label = sprintf("Median: %.3f\nMean: %.3f", median, mean)),
-    vjust = -0.3, size = 3, color = "gray30", inherit.aes = FALSE
-  ) +
   labs(
-    title   = "Distribution of Distance from 2016\u20132018 Baseline",
+    title    = "Distribution of Distance from 2016\u20132018 Baseline",
     subtitle = "Absolute difference |p_baseline \u2212 p_mode| across all variables",
-    x       = NULL,
-    y       = "Distance from Baseline (Absolute Difference in Proportion)",
-    caption = "Violin trimmed at zero. Box: median, IQR, 1.5\u00d7IQR whiskers. White diamond: mean. Labeled points are upper outliers."
+    x        = NULL,
+    y        = "Distance from Baseline (Absolute Difference in Proportion)",
+    caption  = "Violin trimmed at zero. Box: median, IQR, 1.5\u00d7IQR whiskers. White diamond: mean. Labeled points are upper outliers."
   ) +
-  theme_minimal(base_size = 12) +
+  theme_minimal(base_size = 16) +
   theme(
-    plot.title         = element_text(face = "bold", size = 13),
-    plot.subtitle      = element_text(size = 11),
-    legend.position    = "none",
+    plot.title         = element_text(face = "bold", size = 20),
+    plot.subtitle      = element_text(size = 16),
     panel.grid.major.x = element_blank(),
     axis.text.x        = element_text(size = 12, face = "bold"),
-    plot.margin        = margin(t = 10, r = 40, b = 30, l = 10)
+    axis.text.y        = element_text(size = 14),
+    axis.title.y       = element_text(size = 15),
+    plot.margin        = margin(t = 10, r = 60, b = 10, l = 10)
   )
 
 violin_plot

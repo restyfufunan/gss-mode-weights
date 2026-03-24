@@ -23,6 +23,7 @@ Use this file to edit plot aesthetics without re-running the survey design or co
 ```{r setup, message=FALSE, warning=FALSE}
 source("00_setup.R")
 library(forcats)
+library(ggrepel)
 
 # ── Plot-specific aesthetics ───────────────────────────────────────────────────
 # group_levels and color_mapping must match MODE_COLORS from 00_setup.R for consistency.
@@ -173,12 +174,16 @@ violin_plot <- ggplot(closeness_long,
   geom_point(data = outlier_data,
              aes(x = mode_label, y = distance, color = mode_label),
              size = 2.5, inherit.aes = FALSE) +
-  geom_text(data = outlier_data,
-            aes(x     = as.numeric(mode_label) + nudge_x,
-                y     = distance,
-                label = var_label,
-                hjust = hjust_val),
-            size = 4, color = "gray25", inherit.aes = FALSE) +
+  geom_text_repel(data = outlier_data,
+            aes(x = mode_label, y = distance, label = var_label),
+            nudge_x          = outlier_data$nudge_x * 7,
+            direction        = "y",
+            size             = 4,
+            color            = "gray25",
+            segment.color    = "gray50",
+            segment.size     = 0.3,
+            min.segment.length = 0,
+            inherit.aes      = FALSE) +
   stat_summary(fun = mean, geom = "point", shape = 23, size = 4,
                fill = "white", color = "black") +
   scale_fill_manual(values  = violin_fills, name = NULL) +
