@@ -10,7 +10,7 @@ editor: visual
 
 Regenerates all forest plots from `outputs/data/forest_plot_data.csv` (produced by `05_persistence.qmd`):
 
--   **All-variables forest plot** — 137 variables across 8 domains with 84% confidence intervals by group.
+-   **All-variables forest plot** — 143 variables across 8 domains with 84% confidence intervals by group.
 -   **Per-domain forest plots** — Separate plot for each thematic domain.
 -   **Racial attitudes domain plot** — Focused visualization of race/ethnicity-related items.
 

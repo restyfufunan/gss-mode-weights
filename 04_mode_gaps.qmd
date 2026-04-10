@@ -8,7 +8,7 @@ editor: visual
 This file produces all §2 outputs for the paper:
 
 -   **§2.1 — Section 1**: Logistic regression predicting web vs. FTF/Phone completion, with odds ratios and a Shapley value decomposition of predictor importance.
--   **§2.2 — Section 2**: Mode gaps in substantive survey responses before and after demographic adjustment across 137 outcome variables.
+-   **§2.2 — Section 2**: Mode gaps in substantive survey responses before and after demographic adjustment across 143 outcome variables.
 
 ------------------------------------------------------------------------
 

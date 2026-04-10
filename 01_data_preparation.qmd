@@ -210,7 +210,7 @@ gss_data <- gssrecode(gss_data, vars = c("polhitok", "polabuse", "polmurdr", "po
 
 ### Race and Ethnicity
 
-Childrearing values items use `gss5cats`. The `RACDIF` series uses `-X` variants (extended alternate intro wording on Form 1, informing respondents the questions have been asked for almost 50 years; original intro on Form 2; both modes; negligible gaps). `racdif5` is excluded from the analytic core as it was new in 2024 and not fielded in 2016/2018. Ethnic group comparisons are limited to the White/Black pairings (`wlthwhts`/`wlthblks`, `workwhts`/`workblks`); the Hispanic analogues were not fielded in 2016/2018.
+Childrearing values items use `gss5cats`. The `RACDIF` series uses `-X` variants (extended alternate intro wording on Form 1, informing respondents the questions have been asked for almost 50 years; original intro on Form 2; both modes; negligible gaps). `racdif5` is excluded from the analytic core as it was new in 2024 and not fielded in 2016/2018. Ethnic group comparisons are limited to the White/Black pairings (`wlthwhts`/`wlthblks`, `workwhts`/`workblks`); the Hispanic analogues were not fielded in 2016/2018. Interracial marriage attitude items (`MARBLK`, `MARASIAN`, `MARHISP`, `MARWHT`) use a five-category favor/oppose scale and are recoded with `gss5cats()`.
 
 ```{r race-ethnicity}
 gss_data <- gss5cats(gss_data, vars = c("helpoth", "obey", "thnkself", "workhard", "popular"))
@@ -228,6 +228,7 @@ gss_data <- gss7cats(gss_data, vars = c(ethnic_vars, "partyid"))
 
 gss_data <- gss3cats(gss_data, vars = "discaff")
 gss_data <- gss5cats(gss_data, vars = "wrkwayup")
+gss_data <- gss5cats(gss_data, vars = c("marblk", "marasian", "marhisp", "marwht"))
 ```
 
 ### Gender, Sex, and Suicide

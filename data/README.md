@@ -3,7 +3,7 @@
 ## Files in This Repository
 
 ### `gss24_attitudes_opinions.csv`
-Authoritative registry with inclusion decisions, coalesce logic, and binarization rules for the 139 outcome variables analyzed in the paper. Columns include:
+Authoritative registry with inclusion decisions, coalesce logic, and binarization rules for the 143 outcome variables analyzed in the paper. Columns include:
 
 - `var` — GSS variable name (uppercase)
 - `category` — Fine-grained topic label

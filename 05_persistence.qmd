@@ -11,7 +11,7 @@ editor: visual
 This file produces all §4 outputs examining which survey mode better preserves temporal continuity with the pre-multimode GSS baseline (2016–2018):
 
 -   **Forest plots** comparing 2016–2018 baseline estimates to 2022–2024 mode-specific estimates with 84% confidence intervals.
--   **Violin plot** showing distribution of absolute changes across all 137 variables for each mode.
+-   **Violin plot** showing distribution of absolute changes across all 143 variables for each mode.
 -   **Per-domain forest plots** facilitating visual inspection of temporal persistence by thematic area.
 
 Four comparison groups are used: 2016–2018 pooled baseline (gray), 2022–2024 full combined sample (black), 2022–2024 FTF/Phone subsample (orange), and 2022–2024 Web subsample (teal).
@@ -98,7 +98,7 @@ gss_analysis_data <- gss_data %>%
 
 ```{r define-core-vars}
 # Analytic core variable set — defined in 00_setup.R, sourced from
-# data/analytic_core.csv (analytic_core == 1). All 137 items are fielded in
+# data/analytic_core.csv (analytic_core == 1). All 143 items are fielded in
 # 2016, 2018, 2022, and 2024; the CSV is the authoritative record of inclusion.
 c_vars <- intersect(ANALYTIC_CORE_VARS, names(gss_data))
 

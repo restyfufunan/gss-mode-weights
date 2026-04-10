@@ -83,11 +83,11 @@ LIBRAC,Civil liberties (Stouffer),LIBRACY,gender-neutral wording experiment (-y)
 LIFE,Subjective wellbeing,NA,NA,1,Well-being & Life Orientations,NA,NA,binary,"to0=1, to1=2:3"
 LIVEBLKS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
 LIVEWHTS,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
-MARASIAN,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
-MARBLK,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
-MARHISP,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MARASIAN,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,5-cat,NA
+MARBLK,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,5-cat,NA
+MARHISP,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,5-cat,NA
 MARSAME,Sexual behavior,"MARSAME1,MARSAMEY",marsame1=2016/2018 inadvertent wording (missing should); marsamey=2024 Form 2 wording experiment,1,Social Attitudes & Morality,1,"if_else(is.na(marsame) & !is.na(marsame1), marsame1, marsame); if_else(form == 2 & !is.na(marsamey), marsamey, marsame)",5-cat,CAUTION: wording reversion from marsame1 to marsame collinear with FTF-to-web transition in 2022
-MARWHT,Racial attitudes and stereotypes,NA,NA,0,Race & Inequality,NA,NA,NA,NA
+MARWHT,Racial attitudes and stereotypes,NA,NA,1,Race & Inequality,NA,NA,5-cat,NA
 MEOVRWRK,Gender roles,NA,NA,1,Social Attitudes & Morality,NA,NA,binary,"to0=1:2, to1=3:4"
 NATAID,Priorities for national spending,NATAIDY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(nataidy), nataidy, nataid)",3-cat,NA
 NATARMS,Priorities for national spending,NATARMSY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natarmsy), natarmsy, natarms)",3-cat,NA
@@ -98,7 +98,7 @@ NATCRIME,Priorities for national spending,NATCRIMY,wording experiment (-y),1,Pol
 NATDRUG,Priorities for national spending,NATDRUGY,wording experiment (-y); small stable gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natdrugy), natdrugy, natdrug)",3-cat,NA
 NATEDUC,Priorities for national spending,NATEDUCY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(nateducy), nateducy, nateduc)",3-cat,NA
 NATENRGY,Priorities for national spending,NA,NA,1,Political & Economic Orientations,NA,NA,3-cat,NA
-NATENVIR,Priorities for national spending,NATENVIRY,wording experiment (-y),1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natenviy), natenviy, natenvir)",3-cat,NA
+NATENVIR,Priorities for national spending,NATENVIY,wording experiment (-y),1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(natenviy), natenviy, natenvir)",3-cat,NA
 NATFARE,Priorities for national spending,NATFAREY,wording experiment (-y); NOT coalesced — large stable wording gap (~0.20pp),1,Political & Economic Orientations,0,NA,3-cat,Analyzed separately from NATFAREY
 NATFAREY,Priorities for national spending,NA,Form 2 variant of NATFARE ('assistance to the poor' replacing 'welfare'); large stable wording gap (~0.20pp across all years/modes),1,Political & Economic Orientations,NA,NA,3-cat,Analyzed separately from NATFARE
 NATHEAL,Priorities for national spending,NATHEALY,wording experiment (-y); negligible gap,1,Political & Economic Orientations,1,"if_else(form == 2 & !is.na(nathealy), nathealy, natheal)",3-cat,NA
